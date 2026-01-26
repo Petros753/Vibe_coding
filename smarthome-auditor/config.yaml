@@ -1,0 +1,38 @@
+# SmartHome Security Auditor Configuration
+# Copy this file to ~/.smarthome-auditor/config.yaml
+
+# Network scanning settings
+scan:
+  timeout: 2.0              # Timeout for network connections (seconds)
+  max_concurrent: 100       # Maximum concurrent connections
+  port_scan_timeout: 1.0    # Timeout for port scanning
+  common_ports_only: true   # Only scan common ports in quick mode
+  resolve_hostnames: true   # Resolve IP addresses to hostnames
+
+# Audit settings
+audit:
+  deep_scan: false          # Perform deep scanning by default
+  check_credentials: true   # Check for default credentials
+  check_ssl: true           # Check SSL/TLS certificates
+  check_cve: true           # Check for known CVEs
+  max_concurrent: 5         # Maximum concurrent audits
+
+# Telegram notifications
+telegram:
+  enabled: false
+  bot_token: ""             # Your Telegram bot token
+  chat_id: ""               # Your Telegram chat ID
+  notify_on:                # Severity levels to notify on
+    - critical
+    - high
+
+# Database settings
+database:
+  path: "~/.smarthome-auditor/audits.db"
+  save_results: true        # Save audit results to database
+
+# Output settings
+output_dir: "~/.smarthome-auditor/reports"
+verbose: false
+quiet: false
+no_color: false
