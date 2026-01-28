@@ -1,0 +1,647 @@
+{
+  "name": "BJU Mini App API",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bju/get-user",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-get-user",
+      "name": "Webhook: get-user",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 100],
+      "webhookId": "bju-get-user"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    s.id,\n    s.nick,\n    s.subscription_end,\n    s.trial_used,\n    s.recurring,\n    CASE WHEN s.subscription_end > NOW() THEN true ELSE false END as is_premium,\n    COALESCE(g.daily_calories, 2000) as daily_calories,\n    COALESCE(g.daily_protein, 120) as daily_protein,\n    COALESCE(g.daily_fat, 65) as daily_fat,\n    COALESCE(g.daily_carbs, 250) as daily_carbs\nFROM subscriptions s\nLEFT JOIN user_goals g ON s.id = g.chat_id\nWHERE s.id = {{ $json.body.chat_id }}\nLIMIT 1;",
+        "options": {}
+      },
+      "id": "pg-get-user",
+      "name": "PG: Get User",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [480, 100],
+      "credentials": {
+        "postgres": {
+          "id": "IYz160J2DKoANawE",
+          "name": "AI consultant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first();\nconst userData = input?.json;\n\nif (!userData || !userData.id) {\n  return {\n    json: {\n      success: false,\n      error: 'User not found'\n    }\n  };\n}\n\nreturn {\n  json: {\n    success: true,\n    user: {\n      id: userData.id,\n      nick: userData.nick,\n      subscription_end: userData.subscription_end,\n      trial_used: userData.trial_used,\n      recurring: userData.recurring,\n      is_premium: userData.is_premium,\n      goals: {\n        calories: userData.daily_calories,\n        protein: userData.daily_protein,\n        fat: userData.daily_fat,\n        carbs: userData.daily_carbs\n      }\n    }\n  }\n};"
+      },
+      "id": "code-format-user",
+      "name": "Format User Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-get-user",
+      "name": "Respond: get-user",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [920, 100]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bju/log-meal",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-log-meal",
+      "name": "Webhook: log-meal",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 300],
+      "webhookId": "bju-log-meal"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO nutrition_log (chat_id, meal_type, description, calories, protein, fat, carbs)\nVALUES (\n    {{ $json.body.chat_id }},\n    '{{ $json.body.meal_type }}',\n    '{{ $json.body.description.replace(/'/g, \"''\") }}',\n    {{ $json.body.calories || 0 }},\n    {{ $json.body.protein || 0 }},\n    {{ $json.body.fat || 0 }},\n    {{ $json.body.carbs || 0 }}\n)\nRETURNING *;",
+        "options": {}
+      },
+      "id": "pg-log-meal",
+      "name": "PG: Insert Meal",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [480, 300],
+      "credentials": {
+        "postgres": {
+          "id": "IYz160J2DKoANawE",
+          "name": "AI consultant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first();\nconst mealData = input?.json;\n\nif (!mealData || !mealData.id) {\n  return {\n    json: {\n      success: false,\n      error: 'Failed to save meal'\n    }\n  };\n}\n\nreturn {\n  json: {\n    success: true,\n    meal: {\n      id: mealData.id,\n      chat_id: mealData.chat_id,\n      meal_type: mealData.meal_type,\n      description: mealData.description,\n      calories: mealData.calories,\n      protein: parseFloat(mealData.protein),\n      fat: parseFloat(mealData.fat),\n      carbs: parseFloat(mealData.carbs),\n      created_at: mealData.created_at\n    }\n  }\n};"
+      },
+      "id": "code-format-meal",
+      "name": "Format Meal Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-log-meal",
+      "name": "Respond: log-meal",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [920, 300]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bju/get-history",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-get-history",
+      "name": "Webhook: get-history",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 500],
+      "webhookId": "bju-get-history"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    id, \n    meal_type, \n    description, \n    calories, \n    protein, \n    fat, \n    carbs, \n    image_url,\n    created_at\nFROM nutrition_log\nWHERE chat_id = {{ $json.body.chat_id }}\nAND DATE(created_at) = '{{ $json.body.date }}'\nORDER BY created_at ASC;",
+        "options": {}
+      },
+      "id": "pg-get-history",
+      "name": "PG: Get History",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [480, 500],
+      "credentials": {
+        "postgres": {
+          "id": "IYz160J2DKoANawE",
+          "name": "AI consultant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst meals = items.map(item => ({\n  id: item.json.id,\n  meal_type: item.json.meal_type,\n  description: item.json.description,\n  calories: item.json.calories || 0,\n  protein: parseFloat(item.json.protein) || 0,\n  fat: parseFloat(item.json.fat) || 0,\n  carbs: parseFloat(item.json.carbs) || 0,\n  image_url: item.json.image_url,\n  created_at: item.json.created_at\n}));\n\nconst totals = meals.reduce((acc, meal) => ({\n  calories: acc.calories + meal.calories,\n  protein: acc.protein + meal.protein,\n  fat: acc.fat + meal.fat,\n  carbs: acc.carbs + meal.carbs\n}), { calories: 0, protein: 0, fat: 0, carbs: 0 });\n\nreturn {\n  json: {\n    success: true,\n    meals: meals,\n    totals: {\n      calories: Math.round(totals.calories),\n      protein: Math.round(totals.protein * 10) / 10,\n      fat: Math.round(totals.fat * 10) / 10,\n      carbs: Math.round(totals.carbs * 10) / 10\n    }\n  }\n};"
+      },
+      "id": "code-format-history",
+      "name": "Format History Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 500]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-get-history",
+      "name": "Respond: get-history",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [920, 500]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bju/get-stats",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-get-stats",
+      "name": "Webhook: get-stats",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 700],
+      "webhookId": "bju-get-stats"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst period = body.period || 'week';\nconst interval = period === 'month' ? '30 days' : '7 days';\n\nreturn {\n  json: {\n    chat_id: body.chat_id,\n    interval: interval\n  }\n};"
+      },
+      "id": "code-prepare-stats",
+      "name": "Prepare Stats Query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 700]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    DATE(created_at) as date,\n    SUM(calories) as total_calories,\n    SUM(protein) as total_protein,\n    SUM(fat) as total_fat,\n    SUM(carbs) as total_carbs,\n    COUNT(*) as meals_count\nFROM nutrition_log\nWHERE chat_id = {{ $json.chat_id }}\nAND created_at >= NOW() - INTERVAL '{{ $json.interval }}'\nGROUP BY DATE(created_at)\nORDER BY date DESC;",
+        "options": {}
+      },
+      "id": "pg-get-stats",
+      "name": "PG: Get Stats",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [700, 700],
+      "credentials": {
+        "postgres": {
+          "id": "IYz160J2DKoANawE",
+          "name": "AI consultant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst stats = items.map(item => ({\n  date: item.json.date,\n  total_calories: parseInt(item.json.total_calories) || 0,\n  total_protein: parseFloat(item.json.total_protein) || 0,\n  total_fat: parseFloat(item.json.total_fat) || 0,\n  total_carbs: parseFloat(item.json.total_carbs) || 0,\n  meals_count: parseInt(item.json.meals_count) || 0\n}));\n\n// Calculate averages\nlet avgCalories = 0, avgProtein = 0, avgFat = 0, avgCarbs = 0;\nif (stats.length > 0) {\n  avgCalories = Math.round(stats.reduce((a, s) => a + s.total_calories, 0) / stats.length);\n  avgProtein = Math.round(stats.reduce((a, s) => a + s.total_protein, 0) / stats.length);\n  avgFat = Math.round(stats.reduce((a, s) => a + s.total_fat, 0) / stats.length);\n  avgCarbs = Math.round(stats.reduce((a, s) => a + s.total_carbs, 0) / stats.length);\n}\n\nreturn {\n  json: {\n    success: true,\n    stats: stats,\n    averages: {\n      calories: avgCalories,\n      protein: avgProtein,\n      fat: avgFat,\n      carbs: avgCarbs\n    },\n    days_tracked: stats.length\n  }\n};"
+      },
+      "id": "code-format-stats",
+      "name": "Format Stats Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 700]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-get-stats",
+      "name": "Respond: get-stats",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1140, 700]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bju/update-goals",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-update-goals",
+      "name": "Webhook: update-goals",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 900],
+      "webhookId": "bju-update-goals"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO user_goals (chat_id, daily_calories, daily_protein, daily_fat, daily_carbs, updated_at)\nVALUES (\n    {{ $json.body.chat_id }},\n    {{ $json.body.calories || 2000 }},\n    {{ $json.body.protein || 120 }},\n    {{ $json.body.fat || 65 }},\n    {{ $json.body.carbs || 250 }},\n    NOW()\n)\nON CONFLICT (chat_id) DO UPDATE SET\n    daily_calories = EXCLUDED.daily_calories,\n    daily_protein = EXCLUDED.daily_protein,\n    daily_fat = EXCLUDED.daily_fat,\n    daily_carbs = EXCLUDED.daily_carbs,\n    updated_at = NOW()\nRETURNING *;",
+        "options": {}
+      },
+      "id": "pg-update-goals",
+      "name": "PG: Update Goals",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [480, 900],
+      "credentials": {
+        "postgres": {
+          "id": "IYz160J2DKoANawE",
+          "name": "AI consultant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first();\nconst goalData = input?.json;\n\nif (!goalData) {\n  return {\n    json: {\n      success: false,\n      error: 'Failed to update goals'\n    }\n  };\n}\n\nreturn {\n  json: {\n    success: true,\n    goals: {\n      calories: goalData.daily_calories,\n      protein: goalData.daily_protein,\n      fat: goalData.daily_fat,\n      carbs: goalData.daily_carbs\n    },\n    updated_at: goalData.updated_at\n  }\n};"
+      },
+      "id": "code-format-goals",
+      "name": "Format Goals Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 900]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-update-goals",
+      "name": "Respond: update-goals",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [920, 900]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bju/delete-meal",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-delete-meal",
+      "name": "Webhook: delete-meal",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 1100],
+      "webhookId": "bju-delete-meal"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM nutrition_log\nWHERE id = {{ $json.body.meal_id }}\nAND chat_id = {{ $json.body.chat_id }}\nRETURNING id;",
+        "options": {}
+      },
+      "id": "pg-delete-meal",
+      "name": "PG: Delete Meal",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [480, 1100],
+      "credentials": {
+        "postgres": {
+          "id": "IYz160J2DKoANawE",
+          "name": "AI consultant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first();\nconst deleted = input?.json;\n\nif (!deleted || !deleted.id) {\n  return {\n    json: {\n      success: false,\n      error: 'Meal not found or already deleted'\n    }\n  };\n}\n\nreturn {\n  json: {\n    success: true,\n    deleted_id: deleted.id\n  }\n};"
+      },
+      "id": "code-format-delete",
+      "name": "Format Delete Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 1100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-delete-meal",
+      "name": "Respond: delete-meal",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [920, 1100]
+    },
+    {
+      "parameters": {
+        "content": "## BJU Mini App API\n\nЭтот workflow обрабатывает API запросы для Mini App трекера питания.\n\n### Эндпоинты:\n- **POST /bju/get-user** — получить данные пользователя и его цели\n- **POST /bju/log-meal** — добавить приём пищи\n- **POST /bju/get-history** — история питания за день\n- **POST /bju/get-stats** — статистика за период\n- **POST /bju/update-goals** — обновить дневные цели\n- **POST /bju/delete-meal** — удалить приём пищи\n\n### База данных:\nИспользуются таблицы:\n- `subscriptions` — данные подписок\n- `nutrition_log` — лог питания\n- `user_goals` — персональные цели",
+        "height": 380,
+        "width": 320
+      },
+      "id": "note-info",
+      "name": "Info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-60, 100]
+    }
+  ],
+  "connections": {
+    "Webhook: get-user": {
+      "main": [
+        [
+          {
+            "node": "PG: Get User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG: Get User": {
+      "main": [
+        [
+          {
+            "node": "Format User Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format User Response": {
+      "main": [
+        [
+          {
+            "node": "Respond: get-user",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: log-meal": {
+      "main": [
+        [
+          {
+            "node": "PG: Insert Meal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG: Insert Meal": {
+      "main": [
+        [
+          {
+            "node": "Format Meal Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Meal Response": {
+      "main": [
+        [
+          {
+            "node": "Respond: log-meal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: get-history": {
+      "main": [
+        [
+          {
+            "node": "PG: Get History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG: Get History": {
+      "main": [
+        [
+          {
+            "node": "Format History Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format History Response": {
+      "main": [
+        [
+          {
+            "node": "Respond: get-history",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: get-stats": {
+      "main": [
+        [
+          {
+            "node": "Prepare Stats Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Stats Query": {
+      "main": [
+        [
+          {
+            "node": "PG: Get Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG: Get Stats": {
+      "main": [
+        [
+          {
+            "node": "Format Stats Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Stats Response": {
+      "main": [
+        [
+          {
+            "node": "Respond: get-stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: update-goals": {
+      "main": [
+        [
+          {
+            "node": "PG: Update Goals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG: Update Goals": {
+      "main": [
+        [
+          {
+            "node": "Format Goals Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Goals Response": {
+      "main": [
+        [
+          {
+            "node": "Respond: update-goals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: delete-meal": {
+      "main": [
+        [
+          {
+            "node": "PG: Delete Meal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG: Delete Meal": {
+      "main": [
+        [
+          {
+            "node": "Format Delete Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Delete Response": {
+      "main": [
+        [
+          {
+            "node": "Respond: delete-meal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bju-miniapp-api"
+  },
+  "tags": [
+    {
+      "name": "Mini App",
+      "id": "miniapp"
+    },
+    {
+      "name": "API",
+      "id": "api"
+    }
+  ]
+}
