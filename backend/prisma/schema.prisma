@@ -1,0 +1,495 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Перечисления
+// ─────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  ORG_ADMIN
+  ORG_MANAGER
+  RESIDENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING
+  RESOLVED
+  CLOSED
+}
+
+enum TicketCategory {
+  PLUMBING
+  ELECTRICAL
+  ELEVATOR
+  INTERCOM
+  CLEANING
+  SECURITY
+  PARKING
+  OTHER
+}
+
+enum MeterType {
+  COLD_WATER
+  HOT_WATER
+  ELECTRICITY
+  GAS
+  HEAT
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ResidentAccessLevel {
+  OWNER
+  TENANT
+  FAMILY_MEMBER
+}
+
+enum NotificationType {
+  TICKET_UPDATE
+  ANNOUNCEMENT
+  CHAT_MESSAGE
+  INTERCOM_CALL
+  METER_REMINDER
+}
+
+// ─────────────────────────────────────────────
+// Организация (тенант — УК)
+// ─────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  inn       String?  @unique
+  phone     String?
+  email     String?
+  logoUrl   String?
+  address   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Иерархия объектов
+  complexes  Complex[]
+  buildings  Building[]
+  entrances  Entrance[]
+  apartments Apartment[]
+
+  // Пользователи
+  users              User[]
+  apartmentResidents ApartmentResident[]
+
+  // Контент
+  tickets        Ticket[]
+  ticketComments TicketComment[]
+  announcements  Announcement[]
+  chatMessages   ChatMessage[]
+  notifications  Notification[]
+
+  // Устройства
+  cameras   Camera[]
+  intercoms Intercom[]
+
+  // Счётчики
+  meters Meter[]
+
+  @@map("organizations")
+}
+
+// ─────────────────────────────────────────────
+// Иерархия: ЖК → Дом → Подъезд → Квартира
+// ─────────────────────────────────────────────
+
+model Complex {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  address        String
+  city           String   @default("Москва")
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  buildings    Building[]
+  cameras      Camera[]
+
+  @@index([organizationId])
+  @@map("complexes")
+}
+
+model Building {
+  id             String   @id @default(cuid())
+  organizationId String
+  complexId      String
+  name           String
+  address        String?
+  floors         Int      @default(9)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  complex      Complex      @relation(fields: [complexId], references: [id], onDelete: Cascade)
+  entrances    Entrance[]
+  cameras      Camera[]
+
+  @@index([organizationId])
+  @@index([complexId])
+  @@map("buildings")
+}
+
+model Entrance {
+  id             String   @id @default(cuid())
+  organizationId String
+  buildingId     String
+  number         Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  building     Building     @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  apartments   Apartment[]
+  cameras      Camera[]
+  intercoms    Intercom[]
+
+  @@unique([buildingId, number])
+  @@index([organizationId])
+  @@map("entrances")
+}
+
+model Apartment {
+  id             String   @id @default(cuid())
+  organizationId String
+  entranceId     String
+  number         String
+  floor          Int
+  area           Float?
+  rooms          Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  entrance     Entrance            @relation(fields: [entranceId], references: [id], onDelete: Cascade)
+  residents    ApartmentResident[]
+  meters       Meter[]
+
+  @@unique([entranceId, number])
+  @@index([organizationId])
+  @@map("apartments")
+}
+
+// ─────────────────────────────────────────────
+// Пользователи
+// ─────────────────────────────────────────────
+
+model User {
+  id             String  @id @default(cuid())
+  organizationId String?
+  phone          String  @unique
+  firstName      String?
+  lastName       String?
+  middleName     String?
+  avatarUrl      String?
+  role           Role    @default(RESIDENT)
+  isActive       Boolean @default(true)
+
+  otpCode      String?
+  otpExpiresAt DateTime?
+  otpAttempts  Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization    Organization?       @relation(fields: [organizationId], references: [id])
+  sessions        Session[]
+  apartments      ApartmentResident[]
+  createdTickets  Ticket[]            @relation("TicketCreator")
+  assignedTickets Ticket[]            @relation("TicketAssignee")
+  ticketComments  TicketComment[]
+  chatMessages    ChatMessage[]
+  notifications   Notification[]
+  pushTokens      PushToken[]
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  isRevoked    Boolean  @default(false)
+  expiresAt    DateTime
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model ApartmentResident {
+  id             String              @id @default(cuid())
+  organizationId String
+  userId         String
+  apartmentId    String
+  accessLevel    ResidentAccessLevel @default(TENANT)
+  isVerified     Boolean             @default(false)
+  verifiedAt     DateTime?
+  createdAt      DateTime            @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apartment    Apartment    @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, apartmentId])
+  @@index([organizationId])
+  @@map("apartment_residents")
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_tokens")
+}
+
+// ─────────────────────────────────────────────
+// Камеры
+// ─────────────────────────────────────────────
+
+model Camera {
+  id               String   @id @default(cuid())
+  organizationId   String
+  complexId        String?
+  buildingId       String?
+  entranceId       String?
+  name             String
+  rtspUrlEncrypted String
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  complex      Complex?     @relation(fields: [complexId], references: [id])
+  building     Building?    @relation(fields: [buildingId], references: [id])
+  entrance     Entrance?    @relation(fields: [entranceId], references: [id])
+
+  @@index([organizationId])
+  @@map("cameras")
+}
+
+// ─────────────────────────────────────────────
+// Домофоны
+// ─────────────────────────────────────────────
+
+model Intercom {
+  id             String   @id @default(cuid())
+  organizationId String
+  entranceId     String
+  name           String
+  model          String?
+  httpOpenUrl    String?
+  httpOpenToken  String?
+  sipLogin       String?
+  sipPassword    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  entrance     Entrance          @relation(fields: [entranceId], references: [id])
+  callLogs     IntercomCallLog[]
+
+  @@index([organizationId])
+  @@map("intercoms")
+}
+
+model IntercomCallLog {
+  id         String    @id @default(cuid())
+  intercomId String
+  calledAt   DateTime  @default(now())
+  answeredAt DateTime?
+  openedAt   DateTime?
+  duration   Int?
+
+  intercom Intercom @relation(fields: [intercomId], references: [id])
+
+  @@index([intercomId])
+  @@map("intercom_call_logs")
+}
+
+// ─────────────────────────────────────────────
+// Заявки
+// ─────────────────────────────────────────────
+
+model Ticket {
+  id             String         @id @default(cuid())
+  organizationId String
+  ticketNumber   Int
+  title          String
+  description    String
+  category       TicketCategory @default(OTHER)
+  status         TicketStatus   @default(OPEN)
+  mediaUrls      String[]       @default([])
+  creatorId      String
+  assigneeId     String?
+  resolvedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  creator      User            @relation("TicketCreator", fields: [creatorId], references: [id])
+  assignee     User?           @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  comments     TicketComment[]
+
+  @@unique([organizationId, ticketNumber])
+  @@index([organizationId])
+  @@index([creatorId])
+  @@map("tickets")
+}
+
+model TicketComment {
+  id             String   @id @default(cuid())
+  organizationId String
+  ticketId       String
+  authorId       String
+  text           String
+  mediaUrls      String[] @default([])
+  isInternal     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  ticket       Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author       User         @relation(fields: [authorId], references: [id])
+
+  @@index([organizationId])
+  @@index([ticketId])
+  @@map("ticket_comments")
+}
+
+// ─────────────────────────────────────────────
+// Чат
+// ─────────────────────────────────────────────
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  organizationId String
+  chatRoomId     String
+  senderId       String
+  text           String?
+  mediaUrls      String[] @default([])
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  @@index([organizationId])
+  @@index([chatRoomId])
+  @@map("chat_messages")
+}
+
+// ─────────────────────────────────────────────
+// Объявления
+// ─────────────────────────────────────────────
+
+model Announcement {
+  id             String             @id @default(cuid())
+  organizationId String
+  title          String
+  body           String
+  imageUrl       String?
+  status         AnnouncementStatus @default(DRAFT)
+  publishedAt    DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@map("announcements")
+}
+
+// ─────────────────────────────────────────────
+// Уведомления
+// ─────────────────────────────────────────────
+
+model Notification {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  type           NotificationType
+  title          String
+  body           String
+  data           Json?
+  isRead         Boolean          @default(false)
+  readAt         DateTime?
+  createdAt      DateTime         @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────────
+// Счётчики
+// ─────────────────────────────────────────────
+
+model Meter {
+  id             String    @id @default(cuid())
+  organizationId String
+  apartmentId    String
+  type           MeterType
+  serialNumber   String?
+  installDate    DateTime?
+  nextCheckDate  DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  apartment    Apartment      @relation(fields: [apartmentId], references: [id])
+  readings     MeterReading[]
+
+  @@index([organizationId])
+  @@index([apartmentId])
+  @@map("meters")
+}
+
+model MeterReading {
+  id          String   @id @default(cuid())
+  meterId     String
+  value       Float
+  imageUrl    String?
+  submittedAt DateTime @default(now())
+  period      String
+
+  meter Meter @relation(fields: [meterId], references: [id])
+
+  @@unique([meterId, period])
+  @@index([meterId])
+  @@map("meter_readings")
+}

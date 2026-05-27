@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+
+# Prisma
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
+# Expo / React Native
+mobile/.expo/
+mobile/android/
+mobile/ios/
