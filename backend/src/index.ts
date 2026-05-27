@@ -2,35 +2,52 @@ import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { cors } from 'hono/cors'
 import { prettyJSON } from 'hono/pretty-json'
+import { authRoutes } from './routes/auth.ts'
 
 const app = new Hono()
+
+// ── Глобальные middleware ─────────────────────────────────────────────────────
 
 app.use('*', logger())
 app.use('*', cors())
 app.use('*', prettyJSON())
 
-app.get('/', (c) => {
-  return c.json({
-    name: 'МойДом API',
-    version: '1.0.0',
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-  })
+// ── Health check ──────────────────────────────────────────────────────────────
+
+app.get('/', (c) =>
+  c.json({ name: 'МойДом API', version: '1.0.0', status: 'ok', timestamp: new Date().toISOString() }),
+)
+
+app.get('/health', (c) => c.json({ status: 'healthy' }))
+
+// ── Роуты ─────────────────────────────────────────────────────────────────────
+
+app.route('/auth', authRoutes)
+
+// TODO Фаза 2
+// app.route('/complexes',  complexRoutes)
+// app.route('/buildings',  buildingRoutes)
+// app.route('/apartments', apartmentRoutes)
+
+// TODO Фаза 3
+// app.route('/tickets',    ticketRoutes)
+// app.route('/meters',     meterRoutes)
+// app.route('/cameras',    cameraRoutes)
+
+// ── 404 ───────────────────────────────────────────────────────────────────────
+
+app.notFound((c) =>
+  c.json({ error: { code: 'NOT_FOUND', message: 'Маршрут не найден' } }, 404),
+)
+
+app.onError((err, c) => {
+  console.error('[UNHANDLED]', err)
+  return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Внутренняя ошибка сервера' } }, 500)
 })
 
-app.get('/health', (c) => {
-  return c.json({ status: 'healthy' })
-})
-
-// TODO: подключить роуты
-// app.route('/auth', authRoutes)
-// app.route('/complexes', complexRoutes)
-// app.route('/tickets', ticketRoutes)
+// ── Запуск ────────────────────────────────────────────────────────────────────
 
 const port = parseInt(process.env.PORT ?? '3000')
-console.log(`🚀 МойДом API запущен на порту ${port}`)
+console.log(`🚀 МойДом API запущен на http://localhost:${port}`)
 
-export default {
-  port,
-  fetch: app.fetch,
-}
+export default { port, fetch: app.fetch }
