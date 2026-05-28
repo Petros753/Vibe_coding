@@ -30,8 +30,11 @@ export default function PhoneScreen() {
       router.push({ pathname: '/(auth)/otp', params: { phone } })
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error?.message
-      setError(msg ?? 'Не удалось отправить код. Попробуйте снова.')
+      setError(
+        'msg: ' + err?.message +
+        '\nurl: ' + (err?.config?.baseURL ?? 'NO_BASE') + (err?.config?.url ?? '') +
+        '\nresp: ' + JSON.stringify(err?.response?.data ?? 'NO_RESPONSE')
+      )
     },
   })
 
@@ -53,6 +56,9 @@ export default function PhoneScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
+      <Text style={{ color: 'gray', fontSize: 10, padding: 6, textAlign: 'center' }}>
+        API: {process.env.EXPO_PUBLIC_API_URL ?? 'UNDEFINED'}
+      </Text>
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -98,7 +104,9 @@ export default function PhoneScreen() {
             </View>
 
             {error && (
-              <Text className="text-sm text-red-500 mt-2">{error}</Text>
+              <Text className="text-xs text-red-500 mt-2" style={{ fontFamily: 'monospace' }}>
+                {error}
+              </Text>
             )}
 
             {/* Submit button */}
