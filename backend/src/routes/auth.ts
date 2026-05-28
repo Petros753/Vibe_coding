@@ -116,8 +116,8 @@ authRoutes.get('/profile', authMiddleware, tenantMiddleware, async (c) => {
         select: {
           id:            true,
           apartmentId:   true,
-          isVerified:    true,
-          ownershipType: true,
+          isVerified:   true,
+          accessLevel:  true,
           apartment: {
             select: {
               number:   true,
