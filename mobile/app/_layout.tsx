@@ -1,8 +1,13 @@
 import '../global.css'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Text, View } from 'react-native'
-import { Stack, useRouter, useSegments } from 'expo-router'
+import {
+  Stack,
+  useRouter,
+  useSegments,
+  useRootNavigationState,
+} from 'expo-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { StatusBar } from 'expo-status-bar'
@@ -46,19 +51,17 @@ class AppErrorBoundary extends React.Component<
 // ── Root layout ───────────────────────────────────────────────────────────────
 
 export default function RootLayout() {
-  const router   = useRouter()
-  const segments = useSegments()
+  const router    = useRouter()
+  const segments  = useSegments()
+  const navState  = useRootNavigationState()
   const { accessToken, _hasHydrated } = useAuthStore()
-  const [ready, setReady] = useState(false)
   const prevToken = useRef<string | null>(null)
 
-  // Give the navigator time to mount before any router.replace() call.
-  useEffect(() => {
-    const t = setTimeout(() => setReady(true), 100)
-    return () => clearTimeout(t)
-  }, [])
+  // The navigator is ready once its state object has a key.
+  // This is the official Expo Router signal that router.replace() is safe.
+  const navigatorReady = navState?.key != null
 
-  // Safety timeout: force hydration if SecureStore never resolves.
+  // Safety net: force-hydrate if SecureStore never resolves.
   useEffect(() => {
     const t = setTimeout(() => {
       if (!useAuthStore.getState()._hasHydrated) {
@@ -69,11 +72,11 @@ export default function RootLayout() {
     return () => clearTimeout(t)
   }, [])
 
-  // Auth redirect.
+  // Auth redirect — runs only after navigator is mounted AND store is hydrated.
   useEffect(() => {
-    if (!ready || !_hasHydrated) return
+    if (!navigatorReady || !_hasHydrated) return
 
-    SplashScreen.hideAsync()
+    SplashScreen.hideAsync().catch(() => {})
 
     const inAuth = segments[0] === '(auth)'
     if (!accessToken && !inAuth) {
@@ -81,15 +84,17 @@ export default function RootLayout() {
     } else if (accessToken && inAuth) {
       router.replace('/(app)/')
     }
-  }, [ready, _hasHydrated, accessToken, segments])
+  }, [navigatorReady, _hasHydrated, accessToken, segments])
 
-  // Push token registration on login / cleanup on logout.
+  // Push token registration on login.
   useEffect(() => {
     if (!_hasHydrated) return
 
     if (accessToken && prevToken.current !== accessToken) {
       prevToken.current = accessToken
-      registerForPushNotifications()
+      registerForPushNotifications().catch((err) => {
+        console.warn('[Push] register failed:', err)
+      })
     } else if (!accessToken && prevToken.current) {
       prevToken.current = null
     }
@@ -105,11 +110,11 @@ export default function RootLayout() {
 
   // Deep-link from cold start via notification.
   useEffect(() => {
-    if (!_hasHydrated || !accessToken) return
+    if (!navigatorReady || !_hasHydrated || !accessToken) return
     Notifications.getLastNotificationResponseAsync().then((response) => {
       if (response) handleNotificationResponse(response, router)
     })
-  }, [_hasHydrated, accessToken])
+  }, [navigatorReady, _hasHydrated, accessToken])
 
   return (
     <AppErrorBoundary>
