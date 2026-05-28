@@ -8,16 +8,19 @@ import { complexRoutes }      from './routes/complexes.ts'
 import { buildingRoutes }     from './routes/buildings.ts'
 import { apartmentRoutes }    from './routes/apartments.ts'
 import { residentRoutes }     from './routes/residents.ts'
+import { ticketRoutes }       from './routes/tickets.ts'
+import { meterRoutes }        from './routes/meters.ts'
+import { cameraRoutes }       from './routes/cameras.ts'
+import { intercomRoutes }     from './routes/intercoms.ts'
+import { pushRoutes }         from './routes/push.ts'
 
 const app = new Hono()
-
-// ── Глобальные middleware ─────────────────────────────────────────────────────
 
 app.use('*', logger())
 app.use('*', cors())
 app.use('*', prettyJSON())
 
-// ── Health check ──────────────────────────────────────────────────────────────
+// ── Health ────────────────────────────────────────────────────────────────────
 
 app.get('/', (c) =>
   c.json({ name: 'МойДом API', version: '1.0.0', status: 'ok', timestamp: new Date().toISOString() }),
@@ -36,13 +39,20 @@ app.route('/buildings',     buildingRoutes)
 app.route('/apartments',    apartmentRoutes)
 app.route('/residents',     residentRoutes)
 
-// TODO Фаза 3
-// app.route('/tickets',    ticketRoutes)
-// app.route('/meters',     meterRoutes)
-// app.route('/cameras',    cameraRoutes)
-// app.route('/intercoms',  intercomRoutes)
+// ── Фаза 3: Основные функции ──────────────────────────────────────────────────
 
-// ── 404 / Error handler ────────────────────────────────────────────────────────
+app.route('/tickets',  ticketRoutes)
+app.route('/meters',   meterRoutes)
+app.route('/cameras',  cameraRoutes)
+app.route('/intercoms',intercomRoutes)
+app.route('/push',     pushRoutes)
+
+// TODO Фаза 4
+// app.route('/announcements', announcementRoutes)
+// app.route('/chat',          chatRoutes)
+// app.route('/notifications', notificationRoutes)
+
+// ── 404 / Error ────────────────────────────────────────────────────────────────
 
 app.notFound((c) =>
   c.json({ error: { code: 'NOT_FOUND', message: 'Маршрут не найден' } }, 404),
@@ -52,8 +62,6 @@ app.onError((err, c) => {
   console.error('[UNHANDLED]', err)
   return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Внутренняя ошибка сервера' } }, 500)
 })
-
-// ── Запуск ────────────────────────────────────────────────────────────────────
 
 const port = parseInt(process.env.PORT ?? '3000')
 console.log(`🚀 МойДом API запущен на http://localhost:${port}`)

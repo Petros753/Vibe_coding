@@ -16,7 +16,7 @@ export type ErrorCode =
 
 export function apiError(
   c: Context,
-  status: 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500,
+  status: 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500 | 502,
   code: ErrorCode,
   message: string,
   details?: unknown,
