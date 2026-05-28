@@ -420,6 +420,7 @@ model Announcement {
   title          String
   body           String
   imageUrl       String?
+  isPinned       Boolean            @default(false)
   status         AnnouncementStatus @default(DRAFT)
   publishedAt    DateTime?
   createdAt      DateTime           @default(now())

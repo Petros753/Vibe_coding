@@ -5,12 +5,12 @@ import { useQuery } from '@tanstack/react-query'
 import { profileApi } from '../../src/api/profile'
 
 const TILES = [
-  { label: 'Заявки',       emoji: '🔧', route: '/(app)/tickets/',    color: 'bg-blue-50',   border: 'border-blue-100'   },
-  { label: 'Домофон',      emoji: '🔔', route: null,                  color: 'bg-amber-50',  border: 'border-amber-100'  },
-  { label: 'Камеры',       emoji: '📷', route: null,                  color: 'bg-slate-50',  border: 'border-slate-200'  },
-  { label: 'Счётчики',     emoji: '📊', route: null,                  color: 'bg-cyan-50',   border: 'border-cyan-100'   },
-  { label: 'Объявления',   emoji: '📢', route: '/(app)/announcements',color: 'bg-purple-50', border: 'border-purple-100' },
-  { label: 'Чат с УК',     emoji: '💬', route: '/(app)/chat',         color: 'bg-green-50',  border: 'border-green-100'  },
+  { label: 'Заявки',       emoji: '🔧', route: '/(app)/tickets/',          color: 'bg-blue-50',   border: 'border-blue-100'   },
+  { label: 'Счётчики',     emoji: '📊', route: '/(app)/meters/',           color: 'bg-cyan-50',   border: 'border-cyan-100'   },
+  { label: 'Объявления',   emoji: '📢', route: '/(app)/announcements/',    color: 'bg-purple-50', border: 'border-purple-100' },
+  { label: 'Чат с УК',     emoji: '💬', route: '/(app)/chat/',             color: 'bg-green-50',  border: 'border-green-100'  },
+  { label: 'Домофон',      emoji: '🔔', route: null,                        color: 'bg-amber-50',  border: 'border-amber-100'  },
+  { label: 'Камеры',       emoji: '📷', route: null,                        color: 'bg-slate-50',  border: 'border-slate-200'  },
 ] as const
 
 export default function HomeScreen() {
@@ -111,7 +111,7 @@ export default function HomeScreen() {
           </Text>
           <TouchableOpacity
             className="mt-3 bg-primary-600 rounded-xl h-9 items-center justify-center"
-            onPress={() => router.push('/(app)/tickets/')}
+            onPress={() => router.push('/(app)/tickets/create')}
           >
             <Text className="text-xs font-semibold text-white">Подать заявку</Text>
           </TouchableOpacity>

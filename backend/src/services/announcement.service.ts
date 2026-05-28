@@ -30,7 +30,7 @@ export const announcementService = {
     const [items, total] = await Promise.all([
       prisma.announcement.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ isPinned: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }],
         skip:    (page - 1) * limit,
         take:    limit,
       }),
