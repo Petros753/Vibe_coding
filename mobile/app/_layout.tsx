@@ -1,7 +1,7 @@
 import '../global.css'
 
-import React, { useEffect, useRef } from 'react'
-import { Text, View } from 'react-native'
+import React, { useEffect, useRef, useState } from 'react'
+import { Text, View, ScrollView } from 'react-native'
 import {
   Stack,
   useRouter,
@@ -22,7 +22,24 @@ import {
 
 SplashScreen.preventAutoHideAsync()
 
-// ── Error boundary — shows real error instead of a blank crash ────────────────
+// ── Error display ─────────────────────────────────────────────────────────────
+
+function ErrorScreen({ title, detail }: { title: string; detail: string }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: 'white' }}>
+      <ScrollView contentContainerStyle={{ padding: 40 }}>
+        <Text style={{ color: 'red', fontSize: 16, fontWeight: 'bold', marginBottom: 12 }}>
+          {title}
+        </Text>
+        <Text style={{ color: '#333', fontSize: 12, fontFamily: 'monospace', lineHeight: 18 }}>
+          {detail}
+        </Text>
+      </ScrollView>
+    </View>
+  )
+}
+
+// ── Error boundary — catches synchronous render errors in children ────────────
 
 class AppErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -34,15 +51,13 @@ class AppErrorBoundary extends React.Component<
     return { error: error.message + '\n\n' + error.stack }
   }
 
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[ErrorBoundary] caught:', error.message, info.componentStack)
+  }
+
   render() {
     if (this.state.error) {
-      return (
-        <View style={{ flex: 1, padding: 40, backgroundColor: 'white' }}>
-          <Text style={{ color: 'red', fontSize: 13, fontFamily: 'monospace' }}>
-            {this.state.error}
-          </Text>
-        </View>
-      )
+      return <ErrorScreen title="React render error" detail={this.state.error} />
     }
     return this.props.children
   }
@@ -51,18 +66,42 @@ class AppErrorBoundary extends React.Component<
 // ── Root layout ───────────────────────────────────────────────────────────────
 
 export default function RootLayout() {
-  const router    = useRouter()
-  const segments  = useSegments()
-  const navState  = useRootNavigationState()
+  const [globalError, setGlobalError] = useState<string | null>(null)
+
+  // Catch errors that React error boundaries miss: async throws, useEffect errors.
+  useEffect(() => {
+    console.log('[Layout] mounting — installing global error handler')
+    const prev = (ErrorUtils as any).getGlobalHandler()
+    ;(ErrorUtils as any).setGlobalHandler((error: Error, isFatal?: boolean) => {
+      console.error('[GlobalHandler] isFatal=' + isFatal, error?.message, error?.stack)
+      setGlobalError(
+        `[${isFatal ? 'FATAL' : 'non-fatal'}]\n${error?.message}\n\n${error?.stack ?? ''}`
+      )
+      prev?.(error, isFatal)
+    })
+    return () => {
+      ;(ErrorUtils as any).setGlobalHandler(prev)
+    }
+  }, [])
+
+  const router   = useRouter()
+  const segments = useSegments()
+  const navState = useRootNavigationState()
   const { accessToken, _hasHydrated } = useAuthStore()
   const prevToken = useRef<string | null>(null)
 
-  // The navigator is ready once its state object has a key.
-  // This is the official Expo Router signal that router.replace() is safe.
   const navigatorReady = navState?.key != null
+
+  console.log(
+    '[Layout] render — navigatorReady:', navigatorReady,
+    '_hasHydrated:', _hasHydrated,
+    'accessToken:', !!accessToken,
+    'segments[0]:', segments[0],
+  )
 
   // Safety net: force-hydrate if SecureStore never resolves.
   useEffect(() => {
+    console.log('[Layout] hydration-timeout effect mounted')
     const t = setTimeout(() => {
       if (!useAuthStore.getState()._hasHydrated) {
         console.warn('[Auth] Hydration timeout — forcing setHydrated(true)')
@@ -72,49 +111,80 @@ export default function RootLayout() {
     return () => clearTimeout(t)
   }, [])
 
-  // Auth redirect — runs only after navigator is mounted AND store is hydrated.
+  // Auth redirect.
   useEffect(() => {
+    console.log('[Layout] auth effect — navigatorReady:', navigatorReady, '_hasHydrated:', _hasHydrated)
     if (!navigatorReady || !_hasHydrated) return
 
-    SplashScreen.hideAsync().catch(() => {})
+    try {
+      SplashScreen.hideAsync().catch((e) => console.warn('[SplashScreen] hideAsync error:', e))
 
-    const inAuth = segments[0] === '(auth)'
-    if (!accessToken && !inAuth) {
-      router.replace('/(auth)/phone')
-    } else if (accessToken && inAuth) {
-      router.replace('/(app)/')
+      const inAuth = segments[0] === '(auth)'
+      console.log('[Layout] navigating — inAuth:', inAuth, 'accessToken:', !!accessToken)
+
+      if (!accessToken && !inAuth) {
+        console.log('[Layout] → replace /(auth)/phone')
+        router.replace('/(auth)/phone')
+      } else if (accessToken && inAuth) {
+        console.log('[Layout] → replace /(app)/')
+        router.replace('/(app)/')
+      } else {
+        console.log('[Layout] → no redirect needed')
+      }
+    } catch (e: any) {
+      console.error('[Layout] auth effect error:', e?.message, e?.stack)
+      setGlobalError(`[auth effect]\n${e?.message}\n\n${e?.stack ?? ''}`)
     }
   }, [navigatorReady, _hasHydrated, accessToken, segments])
 
-  // Push token registration on login.
+  // Push token registration.
   useEffect(() => {
+    console.log('[Layout] push effect — _hasHydrated:', _hasHydrated, 'accessToken:', !!accessToken)
     if (!_hasHydrated) return
 
-    if (accessToken && prevToken.current !== accessToken) {
-      prevToken.current = accessToken
-      registerForPushNotifications().catch((err) => {
-        console.warn('[Push] register failed:', err)
-      })
-    } else if (!accessToken && prevToken.current) {
-      prevToken.current = null
+    try {
+      if (accessToken && prevToken.current !== accessToken) {
+        prevToken.current = accessToken
+        registerForPushNotifications().catch((e) =>
+          console.warn('[Push] register failed:', e)
+        )
+      } else if (!accessToken && prevToken.current) {
+        prevToken.current = null
+      }
+    } catch (e: any) {
+      console.error('[Layout] push effect error:', e?.message)
     }
   }, [accessToken, _hasHydrated])
 
-  // Deep-link from notification tap (foreground + background).
+  // Notification listener.
   useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      handleNotificationResponse(response, router)
-    })
-    return () => sub.remove()
+    console.log('[Layout] notification listener mounted')
+    try {
+      const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+        console.log('[Layout] notification tapped')
+        handleNotificationResponse(response, router)
+      })
+      return () => sub.remove()
+    } catch (e: any) {
+      console.error('[Layout] notification listener error:', e?.message)
+    }
   }, [router])
 
-  // Deep-link from cold start via notification.
+  // Cold-start notification.
   useEffect(() => {
     if (!navigatorReady || !_hasHydrated || !accessToken) return
-    Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response) handleNotificationResponse(response, router)
-    })
+    console.log('[Layout] checking last notification')
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (response) handleNotificationResponse(response, router)
+      })
+      .catch((e) => console.warn('[Layout] getLastNotification error:', e))
   }, [navigatorReady, _hasHydrated, accessToken])
+
+  // Show global error on screen (errors in useEffect, async throws, etc.)
+  if (globalError) {
+    return <ErrorScreen title="Global JS error" detail={globalError} />
+  }
 
   return (
     <AppErrorBoundary>
