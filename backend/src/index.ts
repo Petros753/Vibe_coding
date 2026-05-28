@@ -13,6 +13,9 @@ import { meterRoutes }        from './routes/meters.ts'
 import { cameraRoutes }       from './routes/cameras.ts'
 import { intercomRoutes }     from './routes/intercoms.ts'
 import { pushRoutes }         from './routes/push.ts'
+import { announcementRoutes } from './routes/announcements.ts'
+import { notificationRoutes } from './routes/notifications.ts'
+import { chatRoutes, websocket } from './routes/chat.ts'
 
 const app = new Hono()
 
@@ -20,18 +23,18 @@ app.use('*', logger())
 app.use('*', cors())
 app.use('*', prettyJSON())
 
-// ── Health ────────────────────────────────────────────────────────────────────
+// ── Health ─────────────────────────────────────────────────────────────────────
 
 app.get('/', (c) =>
   c.json({ name: 'МойДом API', version: '1.0.0', status: 'ok', timestamp: new Date().toISOString() }),
 )
 app.get('/health', (c) => c.json({ status: 'healthy' }))
 
-// ── Фаза 1: Авторизация ───────────────────────────────────────────────────────
+// ── Фаза 1: Авторизация ────────────────────────────────────────────────────────
 
 app.route('/auth', authRoutes)
 
-// ── Фаза 2: Структура ЖК ─────────────────────────────────────────────────────
+// ── Фаза 2: Структура ЖК ──────────────────────────────────────────────────────
 
 app.route('/organizations', organizationRoutes)
 app.route('/complexes',     complexRoutes)
@@ -39,18 +42,19 @@ app.route('/buildings',     buildingRoutes)
 app.route('/apartments',    apartmentRoutes)
 app.route('/residents',     residentRoutes)
 
-// ── Фаза 3: Основные функции ──────────────────────────────────────────────────
+// ── Фаза 3: Основные функции ───────────────────────────────────────────────────
 
-app.route('/tickets',  ticketRoutes)
-app.route('/meters',   meterRoutes)
-app.route('/cameras',  cameraRoutes)
-app.route('/intercoms',intercomRoutes)
-app.route('/push',     pushRoutes)
+app.route('/tickets',   ticketRoutes)
+app.route('/meters',    meterRoutes)
+app.route('/cameras',   cameraRoutes)
+app.route('/intercoms', intercomRoutes)
+app.route('/push',      pushRoutes)
 
-// TODO Фаза 4
-// app.route('/announcements', announcementRoutes)
-// app.route('/chat',          chatRoutes)
-// app.route('/notifications', notificationRoutes)
+// ── Фаза 4: Коммуникации ───────────────────────────────────────────────────────
+
+app.route('/announcements', announcementRoutes)
+app.route('/notifications', notificationRoutes)
+app.route('/chat',          chatRoutes)   // REST + WS на /chat/ws
 
 // ── 404 / Error ────────────────────────────────────────────────────────────────
 
@@ -65,5 +69,6 @@ app.onError((err, c) => {
 
 const port = parseInt(process.env.PORT ?? '3000')
 console.log(`🚀 МойДом API запущен на http://localhost:${port}`)
+console.log(`💬 WebSocket чат: ws://localhost:${port}/chat/ws?token=<JWT>`)
 
-export default { port, fetch: app.fetch }
+export default { port, fetch: app.fetch, websocket }
