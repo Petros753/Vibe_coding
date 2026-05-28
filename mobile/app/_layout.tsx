@@ -1,6 +1,6 @@
 import '../global.css'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -24,9 +24,17 @@ function AuthGuard() {
   const segments = useSegments()
   const { accessToken, _hasHydrated } = useAuthStore()
   const prevToken = useRef<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  // Delay navigation until after Root Layout has fully mounted.
+  // Without this, router.replace() fires before the navigator is ready,
+  // causing "Attempted to navigate before mounting the Root Layout".
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
-    if (!_hasHydrated) return
+    if (!mounted || !_hasHydrated) return
 
     SplashScreen.hideAsync()
 
@@ -37,7 +45,7 @@ function AuthGuard() {
     } else if (accessToken && inAuthGroup) {
       router.replace('/(app)/')
     }
-  }, [accessToken, _hasHydrated, segments])
+  }, [mounted, accessToken, _hasHydrated, segments])
 
   // Register push token after login, unregister after logout
   useEffect(() => {
