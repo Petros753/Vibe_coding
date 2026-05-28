@@ -43,46 +43,47 @@ class AppErrorBoundary extends React.Component<
   }
 }
 
-// ── Auth guard + push registration ───────────────────────────────────────────
+// ── Root layout ───────────────────────────────────────────────────────────────
 
-function AuthGuard() {
+export default function RootLayout() {
   const router   = useRouter()
   const segments = useSegments()
   const { accessToken, _hasHydrated } = useAuthStore()
+  const [ready, setReady] = useState(false)
   const prevToken = useRef<string | null>(null)
-  const [mounted, setMounted] = useState(false)
 
+  // Give the navigator time to mount before any router.replace() call.
   useEffect(() => {
-    setMounted(true)
+    const t = setTimeout(() => setReady(true), 100)
+    return () => clearTimeout(t)
   }, [])
 
-  // Safety timeout: if SecureStore hydration never completes (async failure),
-  // force _hasHydrated=true after 3s so the app doesn't stay on splash forever.
+  // Safety timeout: force hydration if SecureStore never resolves.
   useEffect(() => {
-    const timeout = setTimeout(() => {
+    const t = setTimeout(() => {
       if (!useAuthStore.getState()._hasHydrated) {
         console.warn('[Auth] Hydration timeout — forcing setHydrated(true)')
         useAuthStore.getState().setHydrated(true)
       }
     }, 3000)
-    return () => clearTimeout(timeout)
+    return () => clearTimeout(t)
   }, [])
 
+  // Auth redirect.
   useEffect(() => {
-    if (!mounted || !_hasHydrated) return
+    if (!ready || !_hasHydrated) return
 
     SplashScreen.hideAsync()
 
-    const inAuthGroup = segments[0] === '(auth)'
-
-    if (!accessToken && !inAuthGroup) {
+    const inAuth = segments[0] === '(auth)'
+    if (!accessToken && !inAuth) {
       router.replace('/(auth)/phone')
-    } else if (accessToken && inAuthGroup) {
+    } else if (accessToken && inAuth) {
       router.replace('/(app)/')
     }
-  }, [mounted, accessToken, _hasHydrated, segments])
+  }, [ready, _hasHydrated, accessToken, segments])
 
-  // Register push token after login, unregister after logout
+  // Push token registration on login / cleanup on logout.
   useEffect(() => {
     if (!_hasHydrated) return
 
@@ -94,15 +95,7 @@ function AuthGuard() {
     }
   }, [accessToken, _hasHydrated])
 
-  return null
-}
-
-// ── Notification deep-link handler ────────────────────────────────────────────
-
-function NotificationHandler() {
-  const router = useRouter()
-  const { _hasHydrated, accessToken } = useAuthStore()
-
+  // Deep-link from notification tap (foreground + background).
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       handleNotificationResponse(response, router)
@@ -110,26 +103,18 @@ function NotificationHandler() {
     return () => sub.remove()
   }, [router])
 
+  // Deep-link from cold start via notification.
   useEffect(() => {
     if (!_hasHydrated || !accessToken) return
-
     Notifications.getLastNotificationResponseAsync().then((response) => {
       if (response) handleNotificationResponse(response, router)
     })
   }, [_hasHydrated, accessToken])
 
-  return null
-}
-
-// ── Root layout ───────────────────────────────────────────────────────────────
-
-export default function RootLayout() {
   return (
     <AppErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <QueryClientProvider client={queryClient}>
-          <AuthGuard />
-          <NotificationHandler />
           <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
