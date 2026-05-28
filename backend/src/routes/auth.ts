@@ -111,7 +111,7 @@ authRoutes.get('/profile', authMiddleware, tenantMiddleware, async (c) => {
       lastName:  true,
       phone:     true,
       role:      true,
-      residents: {
+      apartments: {
         where:   { organizationId },
         select: {
           id:            true,
@@ -141,5 +141,6 @@ authRoutes.get('/profile', authMiddleware, tenantMiddleware, async (c) => {
 
   if (!user) return apiError(c, 404, 'NOT_FOUND', 'Пользователь не найден')
 
-  return c.json({ data: user })
+  const { apartments: residents, ...rest } = user
+  return c.json({ data: { ...rest, residents } })
 })
