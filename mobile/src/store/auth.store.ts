@@ -5,11 +5,13 @@ import * as SecureStore from 'expo-secure-store'
 interface AuthState {
   accessToken:  string | null
   refreshToken: string | null
+  pushToken:    string | null
   _hasHydrated: boolean
 
-  setTokens:   (access: string, refresh: string) => void
-  clearAuth:   () => void
-  setHydrated: (v: boolean) => void
+  setTokens:    (access: string, refresh: string) => void
+  clearAuth:    () => void
+  setPushToken: (token: string | null) => void
+  setHydrated:  (v: boolean) => void
 }
 
 const secureStorage = createJSONStorage<AuthState>(() => ({
@@ -23,11 +25,13 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       accessToken:  null,
       refreshToken: null,
+      pushToken:    null,
       _hasHydrated: false,
 
-      setTokens:   (access, refresh) => set({ accessToken: access, refreshToken: refresh }),
-      clearAuth:   () => set({ accessToken: null, refreshToken: null }),
-      setHydrated: (v) => set({ _hasHydrated: v }),
+      setTokens:    (access, refresh) => set({ accessToken: access, refreshToken: refresh }),
+      clearAuth:    () => set({ accessToken: null, refreshToken: null, pushToken: null }),
+      setPushToken: (token) => set({ pushToken: token }),
+      setHydrated:  (v) => set({ _hasHydrated: v }),
     }),
     {
       name: 'moidom-auth',
@@ -35,6 +39,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         accessToken:  state.accessToken,
         refreshToken: state.refreshToken,
+        pushToken:    state.pushToken,
       } as AuthState),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true)

@@ -104,7 +104,7 @@ export const ticketService = {
         select: { token: true },
       })
       if (pushTokens.length) {
-        await sendTicketUpdate(pushTokens.map(t => t.token), updated.ticketNumber, data.status)
+        await sendTicketUpdate(pushTokens.map(t => t.token), updated.ticketNumber, data.status, updated.id)
       }
     }
 

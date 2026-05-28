@@ -1,8 +1,11 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { profileApi } from '../../src/api/profile'
+import { authApi } from '../../src/api/auth'
+import { useAuthStore } from '../../src/store/auth.store'
+import { unregisterPushToken } from '../../src/lib/notifications'
 
 const TILES = [
   { label: 'Заявки',       emoji: '🔧', route: '/(app)/tickets/',          color: 'bg-blue-50',   border: 'border-blue-100'   },

@@ -72,10 +72,19 @@ export async function sendIntercomCall(tokens: string[], intercomId: string): Pr
   })
 }
 
-export async function sendTicketUpdate(tokens: string[], ticketNumber: number, status: string): Promise<void> {
+export async function sendTicketUpdate(
+  tokens: string[],
+  ticketNumber: number,
+  status: string,
+  ticketId?: string,
+): Promise<void> {
   await sendPush(tokens, {
     title: `Заявка #${ticketNumber}`,
     body:  `Статус изменён: ${status}`,
-    data:  { type: 'TICKET_UPDATE', ticketNumber: String(ticketNumber) },
+    data:  {
+      type:         'TICKET_UPDATE',
+      ticketNumber: String(ticketNumber),
+      ...(ticketId && { ticketId }),
+    },
   })
 }
