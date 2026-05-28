@@ -26,11 +26,20 @@ function AuthGuard() {
   const prevToken = useRef<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
-  // Delay navigation until after Root Layout has fully mounted.
-  // Without this, router.replace() fires before the navigator is ready,
-  // causing "Attempted to navigate before mounting the Root Layout".
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  // Safety timeout: if SecureStore hydration never completes (async failure),
+  // force _hasHydrated=true after 3s so the app doesn't stay on splash forever.
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!useAuthStore.getState()._hasHydrated) {
+        console.warn('[Auth] Hydration timeout — forcing setHydrated(true)')
+        useAuthStore.getState().setHydrated(true)
+      }
+    }, 3000)
+    return () => clearTimeout(timeout)
   }, [])
 
   useEffect(() => {
