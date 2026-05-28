@@ -1,6 +1,7 @@
 import '../global.css'
 
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { Text, View } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -12,10 +13,35 @@ import { useAuthStore } from '../src/store/auth.store'
 import {
   registerForPushNotifications,
   handleNotificationResponse,
-  unregisterPushToken,
 } from '../src/lib/notifications'
 
 SplashScreen.preventAutoHideAsync()
+
+// ── Error boundary — shows real error instead of a blank crash ────────────────
+
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: string | null }
+> {
+  state = { error: null }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error: error.message + '\n\n' + error.stack }
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <View style={{ flex: 1, padding: 40, backgroundColor: 'white' }}>
+          <Text style={{ color: 'red', fontSize: 13, fontFamily: 'monospace' }}>
+            {this.state.error}
+          </Text>
+        </View>
+      )
+    }
+    return this.props.children
+  }
+}
 
 // ── Auth guard + push registration ───────────────────────────────────────────
 
@@ -65,7 +91,6 @@ function AuthGuard() {
       registerForPushNotifications()
     } else if (!accessToken && prevToken.current) {
       prevToken.current = null
-      // unregisterPushToken is best-effort — already done in logout flow
     }
   }, [accessToken, _hasHydrated])
 
@@ -79,14 +104,12 @@ function NotificationHandler() {
   const { _hasHydrated, accessToken } = useAuthStore()
 
   useEffect(() => {
-    // Tap on notification while app is in foreground or background
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       handleNotificationResponse(response, router)
     })
     return () => sub.remove()
   }, [router])
 
-  // App launched cold by tapping a notification (killed state)
   useEffect(() => {
     if (!_hasHydrated || !accessToken) return
 
@@ -102,16 +125,18 @@ function NotificationHandler() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <AuthGuard />
-        <NotificationHandler />
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(app)" />
-        </Stack>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
+    <AppErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <QueryClientProvider client={queryClient}>
+          <AuthGuard />
+          <NotificationHandler />
+          <StatusBar style="dark" />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(app)" />
+          </Stack>
+        </QueryClientProvider>
+      </GestureHandlerRootView>
+    </AppErrorBoundary>
   )
 }
