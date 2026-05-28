@@ -41,6 +41,7 @@ export default function AppLayout() {
           tabBarIcon: ({ focused }) => (
             <TabIcon label="Заявки" emoji={focused ? '🔧' : '🔨'} />
           ),
+          headerShown: false,
         }}
       />
       <Tabs.Screen

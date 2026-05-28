@@ -20,6 +20,8 @@ import {
   UnauthorizedError,
 } from '../services/auth.service.ts'
 import { authMiddleware } from '../middleware/auth.ts'
+import { tenantMiddleware } from '../middleware/tenant.ts'
+import { prisma } from '../lib/prisma.ts'
 import { apiError } from '../lib/errors.ts'
 
 export const authRoutes = new Hono()
@@ -93,5 +95,51 @@ authRoutes.post('/logout', authMiddleware, async (c) => {
 
 authRoutes.get('/me', authMiddleware, async (c) => {
   const user = c.get('user')
+  return c.json({ data: user })
+})
+
+// ── GET /auth/profile — полный профиль с квартирами и ЖК ─────────────────────
+
+authRoutes.get('/profile', authMiddleware, tenantMiddleware, async (c) => {
+  const { id: userId, organizationId } = c.get('user')
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id:        true,
+      firstName: true,
+      lastName:  true,
+      phone:     true,
+      role:      true,
+      residents: {
+        where:   { organizationId },
+        select: {
+          id:            true,
+          apartmentId:   true,
+          isVerified:    true,
+          ownershipType: true,
+          apartment: {
+            select: {
+              number:   true,
+              entrance: {
+                select: {
+                  number:   true,
+                  building: {
+                    select: {
+                      address: true,
+                      complex: { select: { id: true, name: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!user) return apiError(c, 404, 'NOT_FOUND', 'Пользователь не найден')
+
   return c.json({ data: user })
 })

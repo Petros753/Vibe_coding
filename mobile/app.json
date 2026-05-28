@@ -28,7 +28,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Приложение МойДом хочет получить доступ к вашим фото для прикрепления к заявкам.",
+          "cameraPermission": "Приложение МойДом хочет использовать камеру для съёмки фото к заявкам."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
