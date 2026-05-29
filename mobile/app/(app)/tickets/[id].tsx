@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   ActivityIndicator, KeyboardAvoidingView, Platform,
-  Image,
+  Image, Keyboard, useWindowDimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -66,6 +66,33 @@ export default function TicketDetailScreen() {
   const scrollRef     = useRef<ScrollView>(null)
   const [comment, setComment] = useState('')
 
+  // ── Android keyboard fix ───────────────────────────────────────────────────
+  // RN 0.79+ New Architecture defaults to adjustNothing on Android, so the
+  // window never shrinks and KeyboardAvoidingView gets no offset.
+  // We track keyboard height manually and compute the padding we need to add.
+  // When softwareKeyboardLayoutMode:"resize" kicks in (next rebuild), the window
+  // will already have shrunk by kbHeight, so the formula resolves to 0 padding.
+  const { height: windowHeight } = useWindowDimensions()
+  const [initialWindowHeight]   = useState(windowHeight)
+  const [kbNativeHeight, setKbNativeHeight] = useState(0)
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return
+    const show = Keyboard.addListener('keyboardDidShow', e => {
+      setKbNativeHeight(e.endCoordinates.height)
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100)
+    })
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKbNativeHeight(0))
+    return () => { show.remove(); hide.remove() }
+  }, [])
+
+  // How much the window has already shrunk (0 on current build, = kbHeight after
+  // rebuild with adjustResize — avoids double-compensation either way).
+  const windowShrank = Math.max(0, initialWindowHeight - windowHeight)
+  const androidBottomPadding = Platform.OS === 'android'
+    ? Math.max(0, kbNativeHeight - windowShrank)
+    : 0
+
   const { data: ticket, isLoading } = useQuery({
     queryKey: ['ticket', id],
     queryFn:  () => ticketsApi.getById(id),
@@ -96,10 +123,11 @@ export default function TicketDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+      {/* behavior="padding" works on iOS; on Android we use manual paddingBottom */}
       <KeyboardAvoidingView
         className="flex-1"
-        behavior="padding"
-        keyboardVerticalOffset={0}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={androidBottomPadding > 0 ? { paddingBottom: androidBottomPadding } : undefined}
       >
         {/* ── Custom header ──────────────────────────────────────────── */}
         <View className="flex-row items-center gap-3 px-4 py-3 bg-white border-b border-slate-100">
