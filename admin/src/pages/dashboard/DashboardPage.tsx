@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
 import { ticketsApi, type TicketStatus } from '../../api/tickets'
 import { residentsApi } from '../../api/residents'
 import { announcementsApi } from '../../api/announcements'
@@ -22,20 +23,33 @@ function StatCard({ label, value, sub }: { label: string; value: number | string
   )
 }
 
+const REFETCH = { refetchInterval: 30_000, refetchIntervalInBackground: true }
+
 export function DashboardPage() {
-  const openQ     = useQuery({ queryKey: ['tickets', 'OPEN'],        queryFn: () => ticketsApi.list({ status: 'OPEN', limit: 1 }) })
-  const inProgQ   = useQuery({ queryKey: ['tickets', 'IN_PROGRESS'], queryFn: () => ticketsApi.list({ status: 'IN_PROGRESS', limit: 1 }) })
-  const waitQ     = useQuery({ queryKey: ['tickets', 'WAITING'],     queryFn: () => ticketsApi.list({ status: 'WAITING', limit: 1 }) })
-  const resolvedQ = useQuery({ queryKey: ['tickets', 'RESOLVED'],    queryFn: () => ticketsApi.list({ status: 'RESOLVED', limit: 1 }) })
-  const residentsQ = useQuery({ queryKey: ['residents'],              queryFn: () => residentsApi.list() })
-  const announcQ  = useQuery({ queryKey: ['announcements', 'PUBLISHED'], queryFn: () => announcementsApi.list({ status: 'PUBLISHED', limit: 1 }) })
-  const recentQ   = useQuery({ queryKey: ['tickets', 'recent'],      queryFn: () => ticketsApi.list({ limit: 10 }) })
+  const openQ     = useQuery({ queryKey: ['tickets', 'OPEN'],        queryFn: () => ticketsApi.list({ status: 'OPEN', limit: 1 }),        ...REFETCH })
+  const inProgQ   = useQuery({ queryKey: ['tickets', 'IN_PROGRESS'], queryFn: () => ticketsApi.list({ status: 'IN_PROGRESS', limit: 1 }), ...REFETCH })
+  const waitQ     = useQuery({ queryKey: ['tickets', 'WAITING'],     queryFn: () => ticketsApi.list({ status: 'WAITING', limit: 1 }),     ...REFETCH })
+  const resolvedQ = useQuery({ queryKey: ['tickets', 'RESOLVED'],    queryFn: () => ticketsApi.list({ status: 'RESOLVED', limit: 1 }),    ...REFETCH })
+  const residentsQ = useQuery({ queryKey: ['residents'],              queryFn: () => residentsApi.list(),                                  ...REFETCH })
+  const announcQ  = useQuery({ queryKey: ['announcements', 'PUBLISHED'], queryFn: () => announcementsApi.list({ status: 'PUBLISHED', limit: 1 }), ...REFETCH })
+  const recentQ   = useQuery({ queryKey: ['tickets', 'recent'],      queryFn: () => ticketsApi.list({ limit: 10 }),                       ...REFETCH })
 
   const pendingCount = (openQ.data?.meta.total ?? 0) + (inProgQ.data?.meta.total ?? 0) + (waitQ.data?.meta.total ?? 0)
 
+  const [lastUpdated, setLastUpdated] = useState(new Date())
+  const isFetching = openQ.isFetching || inProgQ.isFetching || recentQ.isFetching
+  useEffect(() => {
+    if (!isFetching) setLastUpdated(new Date())
+  }, [isFetching])
+
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">Дашборд</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-gray-900">Дашборд</h1>
+        <span className="text-xs text-gray-400">
+          {isFetching ? 'Обновляется...' : `Обновлено ${lastUpdated.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`}
+        </span>
+      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Активных заявок" value={pendingCount} sub="OPEN + IN_PROGRESS + WAITING" />

@@ -38,6 +38,15 @@ export function AnnouncementsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['announcements'] }); closeModal() },
   })
 
+  // Creates a draft and immediately publishes it — this triggers push to all residents
+  const createAndPublishMut = useMutation({
+    mutationFn: async () => {
+      const announcement = await announcementsApi.create({ title: form.title, body: form.body, isPinned: form.isPinned, imageUrl: form.imageUrl || undefined })
+      await announcementsApi.publish(announcement.id)
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['announcements'] }); closeModal() },
+  })
+
   const updateMut = useMutation({
     mutationFn: () => announcementsApi.update(editing!.id, { title: form.title, body: form.body, isPinned: form.isPinned }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['announcements'] }); closeModal() },
@@ -67,7 +76,7 @@ export function AnnouncementsPage() {
   function openEdit(a: Announcement) { setEditing(a); setForm({ title: a.title, body: a.body, imageUrl: a.imageUrl ?? '', isPinned: a.isPinned }); setModalOpen(true) }
   function closeModal() { setModalOpen(false); setEditing(null); setForm(emptyForm) }
 
-  const isSaving = createMut.isPending || updateMut.isPending
+  const isSaving = createMut.isPending || updateMut.isPending || createAndPublishMut.isPending
 
   return (
     <div className="p-6">
@@ -138,9 +147,23 @@ export function AnnouncementsPage() {
         footer={
           <>
             <Button variant="secondary" onClick={closeModal}>Отмена</Button>
-            <Button loading={isSaving} onClick={() => editing ? updateMut.mutate() : createMut.mutate()}>
-              {editing ? 'Сохранить' : 'Создать черновик'}
+            <Button
+              variant="secondary"
+              loading={createMut.isPending || updateMut.isPending}
+              disabled={isSaving}
+              onClick={() => editing ? updateMut.mutate() : createMut.mutate()}
+            >
+              {editing ? 'Сохранить' : 'Черновик'}
             </Button>
+            {!editing && (
+              <Button
+                loading={createAndPublishMut.isPending}
+                disabled={isSaving}
+                onClick={() => createAndPublishMut.mutate()}
+              >
+                Опубликовать 🔔
+              </Button>
+            )}
           </>
         }
       >
