@@ -98,8 +98,8 @@ export default function TicketDetailScreen() {
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        behavior="padding"
+        keyboardVerticalOffset={0}
       >
         {/* ── Custom header ──────────────────────────────────────────── */}
         <View className="flex-row items-center gap-3 px-4 py-3 bg-white border-b border-slate-100">
@@ -121,8 +121,9 @@ export default function TicketDetailScreen() {
         <ScrollView
           ref={scrollRef}
           className="flex-1"
-          contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
           keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
         >
           {/* ── Ticket info card ─────────────────────────────────────── */}
           <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
@@ -181,6 +182,7 @@ export default function TicketDetailScreen() {
                 multiline
                 maxLength={2000}
                 style={{ maxHeight: 100 }}
+                onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
               />
               <TouchableOpacity
                 className={`w-10 h-10 rounded-full items-center justify-center ${

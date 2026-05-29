@@ -14,6 +14,10 @@ export interface Ticket {
   updatedAt: string
   creator: { id: string; firstName: string | null; lastName: string | null; phone: string }
   assignee: { id: string; firstName: string | null; lastName: string | null } | null
+  _count: { comments: number }
+}
+
+export interface TicketDetail extends Ticket {
   comments: TicketComment[]
 }
 
@@ -32,7 +36,7 @@ export const ticketsApi = {
     api.get<{ data: Ticket[]; meta: ListMeta }>('/tickets', { params }).then(r => r.data),
 
   get: (id: string) =>
-    api.get<{ data: Ticket }>(`/tickets/${id}`).then(r => r.data.data),
+    api.get<{ data: TicketDetail }>(`/tickets/${id}`).then(r => r.data.data),
 
   updateStatus: (id: string, status: TicketStatus, assigneeId?: string) =>
     api.patch<{ data: Ticket }>(`/tickets/${id}/status`, { status, assigneeId }).then(r => r.data.data),
