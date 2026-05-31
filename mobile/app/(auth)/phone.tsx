@@ -5,8 +5,7 @@ import {
   SafeAreaView,
 } from 'react-native'
 import { useRouter } from 'expo-router'
-import { useMutation } from '@tanstack/react-query'
-import { authApi } from '../../src/api/auth'
+import auth from '@react-native-firebase/auth'
 
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, '').slice(0, 10)
@@ -18,34 +17,41 @@ function formatPhone(raw: string): string {
 }
 
 export default function PhoneScreen() {
-  const router  = useRouter()
-  const [digits, setDigits] = useState('')
-  const [error,  setError]  = useState<string | null>(null)
+  const router = useRouter()
+  const [digits,  setDigits]  = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState<string | null>(null)
 
   const phone = `+7${digits}`
 
-  const mutation = useMutation({
-    mutationFn: () => authApi.sendOtp(phone),
-    onSuccess: () => {
-      router.push({ pathname: '/(auth)/otp', params: { phone } })
-    },
-    onError: () => {
+  async function handleSubmit() {
+    if (digits.length < 10) {
+      setError('Введите полный номер телефона')
+      return
+    }
+    setLoading(true)
+    setError(null)
+    try {
+      const confirmation = await auth().signInWithPhoneNumber(phone)
+      router.push({
+        pathname: '/(auth)/otp',
+        params: {
+          phone,
+          confirmationId: JSON.stringify(confirmation),
+        },
+      })
+    } catch (err: any) {
+      console.error('[Firebase Phone]', err)
       setError('Не удалось отправить код. Попробуйте снова.')
-    },
-  })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   function handleChangeText(text: string) {
     setError(null)
     const clean = text.replace(/\D/g, '').slice(0, 10)
     setDigits(clean)
-  }
-
-  function handleSubmit() {
-    if (digits.length < 10) {
-      setError('Введите полный номер телефона')
-      return
-    }
-    mutation.mutate()
   }
 
   const isReady = digits.length === 10
@@ -97,22 +103,20 @@ export default function PhoneScreen() {
             </View>
 
             {error && (
-              <Text className="text-xs text-red-500 mt-2">
-                {error}
-              </Text>
+              <Text className="text-xs text-red-500 mt-2">{error}</Text>
             )}
 
-            {/* Submit button */}
+            {/* Submit */}
             <TouchableOpacity
               className={`
                 mt-4 h-14 rounded-xl items-center justify-center
-                ${isReady && !mutation.isPending ? 'bg-primary-600' : 'bg-slate-200'}
+                ${isReady && !loading ? 'bg-primary-600' : 'bg-slate-200'}
               `}
               onPress={handleSubmit}
-              disabled={!isReady || mutation.isPending}
+              disabled={!isReady || loading}
               activeOpacity={0.8}
             >
-              {mutation.isPending ? (
+              {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text className={`text-base font-semibold ${isReady ? 'text-white' : 'text-slate-400'}`}>

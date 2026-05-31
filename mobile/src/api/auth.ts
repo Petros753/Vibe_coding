@@ -26,5 +26,10 @@ export const authApi = {
       .post<{ data: VerifyOtpResponse }>('/auth/verify-otp', { phone, code })
       .then((r) => r.data.data),
 
+  firebaseLogin: (idToken: string) =>
+    api
+      .post<{ data: VerifyOtpResponse }>('/auth/firebase', { idToken })
+      .then((r) => r.data.data),
+
   logout: () => api.post('/auth/logout'),
 }

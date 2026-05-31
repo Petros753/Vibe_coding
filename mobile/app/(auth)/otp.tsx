@@ -4,11 +4,11 @@ import {
   ActivityIndicator, SafeAreaView, Pressable,
 } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
-import { useMutation } from '@tanstack/react-query'
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth'
 import { authApi } from '../../src/api/auth'
 import { useAuthStore } from '../../src/store/auth.store'
 
-const CODE_LENGTH = 4
+const CODE_LENGTH    = 6  // Firebase использует 6-значный код
 const RESEND_SECONDS = 60
 
 function maskPhone(phone: string) {
@@ -19,72 +19,97 @@ function maskPhone(phone: string) {
 }
 
 export default function OtpScreen() {
-  const router = useRouter()
-  const { phone } = useLocalSearchParams<{ phone: string }>()
+  const router    = useRouter()
+  const { phone, confirmationId } = useLocalSearchParams<{ phone: string; confirmationId: string }>()
   const setTokens = useAuthStore((s) => s.setTokens)
 
-  const [code,        setCode]        = useState('')
-  const [error,       setError]       = useState<string | null>(null)
-  const [countdown,   setCountdown]   = useState(RESEND_SECONDS)
+  const [code,         setCode]         = useState('')
+  const [error,        setError]        = useState<string | null>(null)
+  const [loading,      setLoading]      = useState(false)
+  const [countdown,    setCountdown]    = useState(RESEND_SECONDS)
+  const [confirmation, setConfirmation] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null)
   const inputRef = useRef<TextInput>(null)
 
-  // Countdown timer
+  useEffect(() => {
+    if (confirmationId) {
+      try {
+        setConfirmation(JSON.parse(confirmationId))
+      } catch {
+        console.warn('[OTP] Failed to parse confirmationId')
+      }
+    }
+  }, [])
+
+  // Countdown таймер
   useEffect(() => {
     if (countdown <= 0) return
     const id = setTimeout(() => setCountdown((c) => c - 1), 1000)
     return () => clearTimeout(id)
   }, [countdown])
 
-  const verifyMutation = useMutation({
-    mutationFn: (c: string) => authApi.verifyOtp(phone ?? '', c),
-    onSuccess: (data) => {
-      setTokens(data.accessToken, data.refreshToken)
-      router.replace('/(app)/')
-    },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error?.message
-      setError(msg ?? 'Неверный код. Попробуйте снова.')
-      setCode('')
-    },
-  })
-
-  const resendMutation = useMutation({
-    mutationFn: () => authApi.sendOtp(phone ?? ''),
-    onSuccess: () => {
-      setCountdown(RESEND_SECONDS)
-      setError(null)
-      setCode('')
-    },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error?.message
-      setError(msg ?? 'Не удалось отправить код.')
-    },
-  })
-
-  const handleCodeChange = useCallback((text: string) => {
+  const handleCodeChange = useCallback(async (text: string) => {
     const clean = text.replace(/\D/g, '').slice(0, CODE_LENGTH)
     setCode(clean)
     setError(null)
-    if (clean.length === CODE_LENGTH) {
-      verifyMutation.mutate(clean)
-    }
-  }, [])
 
-  const isLoading = verifyMutation.isPending || resendMutation.isPending
+    if (clean.length === CODE_LENGTH) {
+      setLoading(true)
+      try {
+        // 1. Проверяем код через Firebase
+        const result  = await confirmation?.confirm(clean)
+        // 2. Получаем Firebase ID токен
+        const idToken = await result?.user.getIdToken()
+        if (!idToken) throw new Error('No ID token')
+        // 3. Обмениваем на наш JWT
+        const data = await authApi.firebaseLogin(idToken)
+        setTokens(data.accessToken, data.refreshToken)
+        router.replace('/(app)/')
+      } catch (err: any) {
+        console.error('[OTP verify]', err)
+        if (err?.code === 'auth/invalid-verification-code') {
+          setError('Неверный код. Попробуйте снова.')
+        } else if (err?.code === 'auth/code-expired') {
+          setError('Код истёк. Запросите новый.')
+        } else {
+          setError('Ошибка проверки кода. Попробуйте снова.')
+        }
+        setCode('')
+      } finally {
+        setLoading(false)
+      }
+    }
+  }, [confirmation])
+
+  async function handleResend() {
+    setLoading(true)
+    setError(null)
+    try {
+      const newConfirmation = await auth().signInWithPhoneNumber(phone ?? '')
+      setConfirmation(newConfirmation)
+      setCountdown(RESEND_SECONDS)
+      setCode('')
+    } catch {
+      setError('Не удалось отправить код.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const isLoading = loading
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
       <View className="flex-1 px-6">
 
-        {/* Back button */}
+        {/* Кнопка назад */}
         <Pressable
           className="mt-4 mb-8 w-10 h-10 items-center justify-center rounded-full bg-slate-100"
           onPress={() => router.back()}
         >
-          <Text className="text-xl text-slate-700">‹</Text>
+          <Text className="text-xl text-slate-700">←</Text>
         </Pressable>
 
-        {/* Header */}
+        {/* Заголовок */}
         <Text className="text-2xl font-bold text-slate-900 mb-2">
           Код подтверждения
         </Text>
@@ -93,7 +118,7 @@ export default function OtpScreen() {
           <Text className="font-semibold text-slate-700">{maskPhone(phone ?? '')}</Text>
         </Text>
 
-        {/* Hidden real input — keyboard input goes here */}
+        {/* Скрытый input */}
         <TextInput
           ref={inputRef}
           className="absolute opacity-0 w-0 h-0"
@@ -105,31 +130,31 @@ export default function OtpScreen() {
           caretHidden
         />
 
-        {/* Visual 4-box code display */}
+        {/* 6 ячеек кода */}
         <Pressable
-          className="flex-row gap-3 mb-6"
+          className="flex-row gap-2 mb-6"
           onPress={() => inputRef.current?.focus()}
         >
           {Array.from({ length: CODE_LENGTH }).map((_, i) => {
-            const isActive  = code.length === i && !verifyMutation.isPending
-            const isFilled  = i < code.length
-            const hasError  = !!error
+            const isActive = code.length === i && !isLoading
+            const isFilled = i < code.length
+            const hasError = !!error
 
             return (
               <View
                 key={i}
                 className={`
-                  flex-1 h-16 rounded-xl items-center justify-center border-2
-                  ${hasError ? 'border-red-400 bg-red-50' :
-                    isActive ? 'border-primary-600 bg-primary-50' :
-                    isFilled ? 'border-primary-300 bg-white'  :
-                               'border-slate-200  bg-white'}
+                  flex-1 h-14 rounded-xl items-center justify-center border-2
+                  ${hasError  ? 'border-red-400 bg-red-50' :
+                    isActive  ? 'border-primary-600 bg-primary-50' :
+                    isFilled  ? 'border-primary-300 bg-white' :
+                                'border-slate-200 bg-white'}
                 `}
               >
                 {isLoading && i === code.length - 1 ? (
                   <ActivityIndicator color="#2563EB" size="small" />
                 ) : (
-                  <Text className={`text-2xl font-bold ${isFilled ? 'text-slate-900' : 'text-slate-300'}`}>
+                  <Text className={`text-xl font-bold ${isFilled ? 'text-slate-900' : 'text-slate-300'}`}>
                     {isFilled ? '•' : '—'}
                   </Text>
                 )}
@@ -138,14 +163,14 @@ export default function OtpScreen() {
           })}
         </Pressable>
 
-        {/* Error message */}
+        {/* Ошибка */}
         {error && (
           <View className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
             <Text className="text-sm text-red-600">{error}</Text>
           </View>
         )}
 
-        {/* Resend */}
+        {/* Повторная отправка */}
         <View className="items-center mt-2">
           {countdown > 0 ? (
             <Text className="text-sm text-slate-400">
@@ -153,11 +178,8 @@ export default function OtpScreen() {
               <Text className="font-semibold text-slate-600">{countdown}с</Text>
             </Text>
           ) : (
-            <TouchableOpacity
-              onPress={() => resendMutation.mutate()}
-              disabled={resendMutation.isPending}
-            >
-              {resendMutation.isPending ? (
+            <TouchableOpacity onPress={handleResend} disabled={isLoading}>
+              {isLoading ? (
                 <ActivityIndicator color="#2563EB" size="small" />
               ) : (
                 <Text className="text-sm font-semibold text-primary-600">

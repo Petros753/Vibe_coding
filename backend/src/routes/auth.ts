@@ -5,6 +5,7 @@
  * POST /auth/verify-otp  { phone, code }           → { accessToken, refreshToken, user }
  * POST /auth/refresh     { refreshToken }           → { accessToken, refreshToken }
  * POST /auth/logout      Bearer <token>             → { success: true }
+ * POST /auth/firebase    { idToken }                → { accessToken, refreshToken, user }
  */
 
 import { Hono } from 'hono'
@@ -15,6 +16,7 @@ import {
   verifyOtpService,
   refreshService,
   logoutService,
+  createSession,
   OtpInvalidError,
   OtpTooManyAttemptsError,
   UnauthorizedError,
@@ -98,7 +100,7 @@ authRoutes.get('/me', authMiddleware, async (c) => {
   return c.json({ data: user })
 })
 
-// ── GET /auth/profile — полный профиль с квартирами и ЖК ─────────────────────
+// ── GET /auth/profile ────────────────────────────────────────────────────────
 
 authRoutes.get('/profile', authMiddleware, tenantMiddleware, async (c) => {
   const { id: userId, organizationId } = c.get('user')
@@ -143,4 +145,34 @@ authRoutes.get('/profile', authMiddleware, tenantMiddleware, async (c) => {
 
   const { apartments: residents, ...rest } = user
   return c.json({ data: { ...rest, residents } })
+})
+
+// ── POST /auth/firebase ──────────────────────────────────────────────────────
+
+authRoutes.post('/firebase', async (c) => {
+  const { idToken } = await c.req.json()
+  if (!idToken) return apiError(c, 400, 'INVALID_REQUEST', 'idToken required')
+
+  try {
+    const { firebaseAuth } = await import('../lib/firebase.ts')
+    const decoded = await firebaseAuth.verifyIdToken(idToken)
+    const phone = decoded.phone_number
+    if (!phone) return apiError(c, 400, 'INVALID_TOKEN', 'No phone in token')
+
+    const user = await prisma.user.upsert({
+      where:  { phone },
+      update: {},
+      create: { phone },
+    })
+
+    const result = await createSession(user, {
+      userAgent: c.req.header('User-Agent'),
+      ipAddress: c.req.header('X-Forwarded-For') ?? c.req.header('CF-Connecting-IP'),
+    })
+
+    return c.json({ data: result }, 200)
+  } catch (err) {
+    console.error('[firebase-auth]', err)
+    return apiError(c, 401, 'AUTH_FIREBASE_FAILED', 'Firebase token verification failed')
+  }
 })
