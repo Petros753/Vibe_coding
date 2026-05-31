@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "708750145000",
-    "project_id": "moidom-454a5",
-    "storage_bucket": "moidom-454a5.firebasestorage.app"
+    "project_number": "29955475811",
+    "project_id": "moidom2-58e55",
+    "storage_bucket": "moidom2-58e55.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:708750145000:android:44263a2dd798aa8a8ba05d",
+        "mobilesdk_app_id": "1:29955475811:android:d060858e704b1d8932ab56",
         "android_client_info": {
           "package_name": "com.moidom.app"
         }
