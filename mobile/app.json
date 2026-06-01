@@ -54,7 +54,6 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#2563EB",
           "androidMode": "default",
           "androidCollapsedTitle": "МойДом"
         }
