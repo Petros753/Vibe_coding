@@ -2,7 +2,7 @@ import axios from 'axios'
 import { QueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/auth.store'
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000'
+const BASE_URL = 'https://api.moidom-app.ru'
 
 export const api = axios.create({
   baseURL: BASE_URL,
