@@ -6,6 +6,7 @@ import {
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import auth from '@react-native-firebase/auth'
+import { firebaseConfirmation } from '../../src/lib/firebase-confirmation'
 
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, '').slice(0, 10)
@@ -35,25 +36,22 @@ export default function PhoneScreen() {
     setDebugInfo(null)
 
     try {
-      setDebugInfo(`Попытка отправить на ${phone}...`)
+      setDebugInfo(`Отправка на ${phone}...`)
       const confirmation = await auth().signInWithPhoneNumber(phone)
-      setDebugInfo(`Успешно! Переходим к OTP...`)
+      // Сохраняем в модульное хранилище — методы объекта не теряются
+      firebaseConfirmation.set(confirmation)
+      setDebugInfo('Код отправлен, переход к OTP')
       router.push({
         pathname: '/(auth)/otp',
-        params: {
-          phone,
-          confirmationId: JSON.stringify(confirmation),
-        },
+        params: { phone },
       })
     } catch (err: any) {
       console.error('[Firebase Phone]', err)
-      // Показываем ПОЛНУЮ информацию об ошибке
       const errorDetails = {
         code:    err?.code        || 'no code',
         message: err?.message     || 'no message',
         name:    err?.name        || 'no name',
         native:  err?.nativeErrorMessage || 'no native message',
-        stack:   err?.stack?.slice(0, 300) || 'no stack',
       }
       setDebugInfo(JSON.stringify(errorDetails, null, 2))
       setError('Не удалось отправить код')
@@ -137,10 +135,9 @@ export default function PhoneScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* DEBUG OUTPUT */}
             {debugInfo && (
               <View className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 mt-4">
-                <Text className="text-xs font-bold text-yellow-900 mb-2">DEBUG INFO:</Text>
+                <Text className="text-xs font-bold text-yellow-900 mb-2">DEBUG:</Text>
                 <Text className="text-xs text-yellow-900" style={{ fontFamily: 'monospace' }}>
                   {debugInfo}
                 </Text>

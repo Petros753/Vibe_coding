@@ -4,9 +4,10 @@ import {
   ActivityIndicator, SafeAreaView, Pressable, ScrollView,
 } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth'
+import auth from '@react-native-firebase/auth'
 import { authApi } from '../../src/api/auth'
 import { useAuthStore } from '../../src/store/auth.store'
+import { firebaseConfirmation } from '../../src/lib/firebase-confirmation'
 
 const CODE_LENGTH    = 6
 const RESEND_SECONDS = 60
@@ -20,27 +21,15 @@ function maskPhone(phone: string) {
 
 export default function OtpScreen() {
   const router    = useRouter()
-  const { phone, confirmationId } = useLocalSearchParams<{ phone: string; confirmationId: string }>()
+  const { phone } = useLocalSearchParams<{ phone: string }>()
   const setTokens = useAuthStore((s) => s.setTokens)
 
-  const [code,         setCode]         = useState('')
-  const [error,        setError]        = useState<string | null>(null)
-  const [debugInfo,    setDebugInfo]    = useState<string | null>(null)
-  const [loading,      setLoading]      = useState(false)
-  const [countdown,    setCountdown]    = useState(RESEND_SECONDS)
-  const [confirmation, setConfirmation] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null)
+  const [code,      setCode]      = useState('')
+  const [error,     setError]     = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<string | null>(null)
+  const [loading,   setLoading]   = useState(false)
+  const [countdown, setCountdown] = useState(RESEND_SECONDS)
   const inputRef = useRef<TextInput>(null)
-
-  useEffect(() => {
-    if (confirmationId) {
-      try {
-        setConfirmation(JSON.parse(confirmationId))
-        setDebugInfo('Confirmation восстановлен')
-      } catch (e) {
-        setDebugInfo('Ошибка парсинга confirmationId: ' + String(e))
-      }
-    }
-  }, [])
 
   useEffect(() => {
     if (countdown <= 0) return
@@ -55,18 +44,28 @@ export default function OtpScreen() {
 
     if (clean.length === CODE_LENGTH) {
       setLoading(true)
-      setDebugInfo('Шаг 1: confirmation.confirm(' + clean + ')...')
+      const confirmation = firebaseConfirmation.get()
+
+      if (!confirmation) {
+        setDebugInfo('ОШИБКА: confirmation отсутствует в хранилище')
+        setError('Сессия истекла, запросите код заново')
+        setLoading(false)
+        return
+      }
+
+      setDebugInfo('Шаг 1: проверка кода ' + clean + '...')
       try {
-        const result = await confirmation?.confirm(clean)
+        const result = await confirmation.confirm(clean)
         setDebugInfo('Шаг 2: получаем idToken...')
         const idToken = await result?.user.getIdToken()
         if (!idToken) {
           setDebugInfo('ОШИБКА: idToken пустой')
           throw new Error('No ID token')
         }
-        setDebugInfo('Шаг 3: idToken получен (длина ' + idToken.length + '), отправка на бэкенд...')
+        setDebugInfo('Шаг 3: idToken получен (' + idToken.length + ' символов), отправка на бэкенд...')
         const data = await authApi.firebaseLogin(idToken)
         setDebugInfo('Шаг 4: JWT получен, переход в app')
+        firebaseConfirmation.clear()
         setTokens(data.accessToken, data.refreshToken)
         router.replace('/(app)/')
       } catch (err: any) {
@@ -76,7 +75,6 @@ export default function OtpScreen() {
           name:    err?.name        || 'no name',
           response: err?.response?.data || 'no response data',
           status:  err?.response?.status || 'no status',
-          stack:   err?.stack?.slice(0, 200) || 'no stack',
         }
         setDebugInfo(JSON.stringify(errorDetails, null, 2))
         setError('Ошибка проверки кода')
@@ -85,14 +83,14 @@ export default function OtpScreen() {
         setLoading(false)
       }
     }
-  }, [confirmation])
+  }, [])
 
   async function handleResend() {
     setLoading(true)
     setError(null)
     try {
       const newConfirmation = await auth().signInWithPhoneNumber(phone ?? '')
-      setConfirmation(newConfirmation)
+      firebaseConfirmation.set(newConfirmation)
       setCountdown(RESEND_SECONDS)
       setCode('')
     } catch {
@@ -171,7 +169,6 @@ export default function OtpScreen() {
             </View>
           )}
 
-          {/* DEBUG */}
           {debugInfo && (
             <View className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 mb-4">
               <Text className="text-xs font-bold text-yellow-900 mb-2">DEBUG:</Text>
