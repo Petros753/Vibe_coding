@@ -1289,13 +1289,42 @@
         .project-card { transform-style: preserve-3d; will-change: transform; }
 
         /* Hero: 3D canvas inside the glass frame */
-        .hero-3d { position: relative; height: 460px; }
+        .hero-3d {
+            position: relative; height: 460px;
+            animation: hero3dHue 8s ease-in-out infinite;
+        }
+        @keyframes hero3dHue {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50%      { filter: hue-rotate(28deg); }
+        }
         #heroCanvas { width: 100%; height: 100%; display: block; border-radius: 16px; }
         .hero-3d-fallback {
             position: absolute; inset: 0; display: none; place-items: center;
         }
+        .hero-3d.static { animation: none; }
         .hero-3d.static #heroCanvas { display: none; }
         .hero-3d.static .hero-3d-fallback { display: grid; }
+
+        /* Node label overlay (projected screen-space) */
+        .hero-3d-labels { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+        .hero-node-label {
+            position: absolute; top: 0; left: 0;
+            transform: translate(-50%, -150%);
+            padding: 5px 11px; border-radius: 9px; white-space: nowrap;
+            font-size: 12px; font-weight: 600; letter-spacing: .2px;
+            color: var(--text-primary);
+            background: rgba(9, 14, 26, 0.86);
+            border: 1px solid var(--accent);
+            box-shadow: 0 6px 22px rgba(52, 211, 153, 0.28);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            opacity: 0; transition: opacity .18s ease; will-change: transform, opacity;
+        }
+        .hero-node-label.show { opacity: 1; }
+        .hero-node-label::after {
+            content: ''; position: absolute; top: 100%; left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent; border-top-color: var(--accent);
+        }
         .workflow-preview { background: var(--bg-card); border-color: var(--border); }
 
         /* Stat numbers -> gradient */
@@ -2300,7 +2329,9 @@
             })();
         })();
 
-        /* Three.js hero: floating nodes + connectors (lazy CDN, graceful fallback) */
+        /* Three.js hero: immersive AI-automation workflow graph
+           (central hub + orbiting service nodes + animated data-flow.
+            Lazy CDN load, graceful fallback, viewport-gated render.) */
         (function hero() {
             const wrap = document.getElementById('hero3d');
             if (!wrap) return;
@@ -2313,59 +2344,281 @@
 
             function build() {
                 const THREE = window.THREE;
+                if (!THREE) { wrap.classList.add('static'); return; }
                 const canvas = document.getElementById('heroCanvas');
+                if (!canvas) { wrap.classList.add('static'); return; }
+
+                const ACCENT = 0x34d399, ACCENT2 = 0x5b9bd5;
+                const accentCol = new THREE.Color(ACCENT), accent2Col = new THREE.Color(ACCENT2);
                 const w = () => wrap.clientWidth || 1, h = () => wrap.clientHeight || 1;
-                const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+
+                let renderer;
+                try {
+                    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+                } catch (e) { wrap.classList.add('static'); return; }
                 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
                 renderer.setSize(w(), h());
+                if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
+
                 const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(55, w() / h(), 0.1, 100);
-                camera.position.z = 14;
+                const camera = new THREE.PerspectiveCamera(50, w() / h(), 0.1, 100);
+                camera.position.set(0, 0.4, 9);
                 const group = new THREE.Group(); scene.add(group);
 
-                const N = 24, nodes = [];
-                const geo = new THREE.SphereGeometry(0.16, 16, 16);
-                const blue = new THREE.MeshBasicMaterial({ color: 0x5b9bd5 });
-                const em = new THREE.MeshBasicMaterial({ color: 0x34d399 });
-                for (let i = 0; i < N; i++) {
-                    const m = new THREE.Mesh(geo, Math.random() > 0.5 ? blue : em);
-                    const rad = 5 + Math.random() * 3.4, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
-                    m.position.set(rad * Math.sin(ph) * Math.cos(th), rad * Math.sin(ph) * Math.sin(th) * 0.72, rad * Math.cos(ph));
-                    m.userData.v = new THREE.Vector3((Math.random() - 0.5) * 0.006, (Math.random() - 0.5) * 0.006, (Math.random() - 0.5) * 0.006);
-                    group.add(m); nodes.push(m);
-                }
-                const lineMat = new THREE.LineBasicMaterial({ color: 0x3a6ea5, transparent: true, opacity: 0.28 });
-                const lines = new THREE.LineSegments(new THREE.BufferGeometry(), lineMat); group.add(lines);
-                function rebuild() {
-                    const arr = [];
-                    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++)
-                        if (nodes[i].position.distanceTo(nodes[j].position) < 4.2) arr.push(nodes[i].position, nodes[j].position);
-                    lines.geometry.setFromPoints(arr);
-                }
-                rebuild();
+                // ---- lighting: faint ambient + point light from the hub ----
+                scene.add(new THREE.AmbientLight(0x23324c, 1.0));
+                const hubLight = new THREE.PointLight(ACCENT, 2.4, 34, 2);
+                group.add(hubLight);
+                const rim = new THREE.DirectionalLight(ACCENT2, 0.55);
+                rim.position.set(-6, 5, 7); scene.add(rim);
 
+                // ---- shared additive glow sprite (soft radial halo) ----
+                const GLOW = (function () {
+                    const c = document.createElement('canvas'); c.width = c.height = 128;
+                    const g = c.getContext('2d');
+                    const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+                    grd.addColorStop(0.0, 'rgba(255,255,255,0.95)');
+                    grd.addColorStop(0.25, 'rgba(255,255,255,0.5)');
+                    grd.addColorStop(1.0, 'rgba(255,255,255,0)');
+                    g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+                    return new THREE.CanvasTexture(c);
+                })();
+                function makeGlow(color, size) {
+                    const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+                        map: GLOW, color, transparent: true, opacity: 0.85,
+                        blending: THREE.AdditiveBlending, depthWrite: false
+                    }));
+                    spr.scale.set(size, size, 1);
+                    return spr;
+                }
+                function iconSprite(emoji, size) {
+                    const c = document.createElement('canvas'); c.width = c.height = 128;
+                    const g = c.getContext('2d');
+                    g.font = '82px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, sans-serif';
+                    g.textAlign = 'center'; g.textBaseline = 'middle';
+                    g.fillStyle = '#eef4ff';
+                    g.fillText(emoji, 64, 72);
+                    const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+                        map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false
+                    }));
+                    spr.scale.set(size, size, 1);
+                    return spr;
+                }
+
+                // ---- central hub: glowing icosahedron ----
+                const hub = new THREE.Mesh(
+                    new THREE.IcosahedronGeometry(0.72, 0),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x0e3b2a, emissive: ACCENT, emissiveIntensity: 0.9,
+                        metalness: 0.45, roughness: 0.25, flatShading: true
+                    })
+                );
+                group.add(hub);
+                hub.add(new THREE.LineSegments(
+                    new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.82, 0)),
+                    new THREE.LineBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.55 })
+                ));
+                const hubGlow = makeGlow(ACCENT, 3.6); group.add(hubGlow);
+                const hubIcon = iconSprite('🧠', 0.78); hubIcon.position.z = 0.78; group.add(hubIcon);
+
+                // ---- service nodes on orbits ----
+                const SERVICES = [
+                    { name: 'Telegram',      emoji: '✈️', color: 0x2aabee },
+                    { name: 'OpenAI',        emoji: '✦',  color: 0x10a37f },
+                    { name: 'Google Sheets', emoji: '📊', color: 0x0f9d58 },
+                    { name: 'Webhook',       emoji: '🔗', color: 0xf59e0b },
+                    { name: 'HTTP',          emoji: '🌐', color: 0x5b9bd5 },
+                    { name: 'CRM',           emoji: '👥', color: 0xa855f7 },
+                    { name: 'Gmail',         emoji: '✉️', color: 0xea4335 }
+                ];
+                const sphereGeo = new THREE.SphereGeometry(0.34, 24, 24);
+                const packetGeoA = new THREE.SphereGeometry(0.075, 10, 10);
+                const packetGeoB = new THREE.SphereGeometry(0.06, 10, 10);
+                const nodes = [], pickables = [];
+
+                SERVICES.forEach((svc, i) => {
+                    const ng = new THREE.Group(); group.add(ng);
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: svc.color, emissive: svc.color, emissiveIntensity: 0.55,
+                        metalness: 0.3, roughness: 0.35
+                    });
+                    const sphere = new THREE.Mesh(sphereGeo, mat); ng.add(sphere);
+                    ng.add(makeGlow(svc.color, 1.7));
+                    const icon = iconSprite(svc.emoji, 0.5); icon.position.z = 0.4; ng.add(icon);
+
+                    // connector line (hub -> node), updated each frame
+                    const lg = new THREE.BufferGeometry();
+                    lg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+                    const line = new THREE.Line(lg, new THREE.LineBasicMaterial({
+                        color: ACCENT2, transparent: true, opacity: 0.26
+                    }));
+                    group.add(line);
+
+                    // data-flow packets running along the connector
+                    const pkIn = new THREE.Mesh(packetGeoA, new THREE.MeshBasicMaterial({ color: ACCENT }));
+                    const pkOut = new THREE.Mesh(packetGeoB, new THREE.MeshBasicMaterial({ color: ACCENT2 }));
+                    group.add(pkIn, pkOut);
+
+                    // click-pulse marker (bright halo, hidden until triggered)
+                    const pulse = makeGlow(ACCENT, 0.9); pulse.visible = false; group.add(pulse);
+
+                    const node = {
+                        svc, ng, sphere, mat, line, icon, pulse,
+                        baseColor: new THREE.Color(svc.color),
+                        radius: 2.9 + (i % 3) * 0.6,
+                        speed: 0.16 + Math.random() * 0.16,
+                        phase: (i / SERVICES.length) * Math.PI * 2,
+                        tilt: (Math.random() - 0.5) * 1.15,
+                        pos: new THREE.Vector3(),
+                        hovered: false, scale: 1, flash: 0,
+                        packets: [
+                            { mesh: pkIn, t: Math.random(), sp: 0.28 + Math.random() * 0.14, dir: 'in' },
+                            { mesh: pkOut, t: Math.random(), sp: 0.24 + Math.random() * 0.12, dir: 'out' }
+                        ]
+                    };
+                    sphere.userData.node = node;
+                    nodes.push(node); pickables.push(sphere);
+                });
+
+                function nodePos(node, time, out) {
+                    const a = node.phase + time * node.speed;
+                    const x = Math.cos(a) * node.radius;
+                    const z0 = Math.sin(a) * node.radius;
+                    const ct = Math.cos(node.tilt), st = Math.sin(node.tilt);
+                    return out.set(x, -z0 * st, z0 * ct);
+                }
+
+                // ---- HTML label overlay (screen-projected) ----
+                const labels = document.createElement('div');
+                labels.className = 'hero-3d-labels';
+                const labelEl = document.createElement('div');
+                labelEl.className = 'hero-node-label';
+                labels.appendChild(labelEl);
+                wrap.appendChild(labels);
+
+                // ---- pointer / parallax / picking ----
+                const ray = new THREE.Raycaster();
+                const pointer = new THREE.Vector2(-2, -2);
+                let hasPointer = false, hoverNode = null;
                 let tx = 0, ty = 0, mx = 0, my = 0;
+                const wv = new THREE.Vector3();
+
                 wrap.addEventListener('mousemove', e => {
                     const r = wrap.getBoundingClientRect();
-                    tx = ((e.clientX - r.left) / r.width - 0.5) * 0.5;
-                    ty = ((e.clientY - r.top) / r.height - 0.5) * 0.5;
+                    const nx = (e.clientX - r.left) / r.width;
+                    const ny = (e.clientY - r.top) / r.height;
+                    pointer.set(nx * 2 - 1, -(ny * 2 - 1));
+                    hasPointer = true;
+                    tx = (nx - 0.5) * 0.6; ty = (ny - 0.5) * 0.6;
                 });
-                wrap.addEventListener('mouseleave', () => { tx = 0; ty = 0; });
+                wrap.addEventListener('mouseleave', () => {
+                    tx = 0; ty = 0; hasPointer = false; hoverNode = null;
+                    labelEl.classList.remove('show'); wrap.style.cursor = '';
+                });
+                wrap.addEventListener('click', () => {
+                    if (hoverNode) { hoverNode.flash = 1; hoverNode.pulse.visible = true; }
+                });
+
                 let running = true;
-                new IntersectionObserver(es => running = es[0].isIntersecting, { threshold: 0 }).observe(wrap);
-                addEventListener('resize', () => { camera.aspect = w() / h(); camera.updateProjectionMatrix(); renderer.setSize(w(), h()); });
+                new IntersectionObserver(es => { running = es[0].isIntersecting; }, { threshold: 0 }).observe(wrap);
+
+                function resize() {
+                    camera.aspect = w() / h(); camera.updateProjectionMatrix();
+                    renderer.setSize(w(), h());
+                }
+                if (window.ResizeObserver) new ResizeObserver(resize).observe(wrap);
+                else addEventListener('resize', resize);
+
+                const clock = new THREE.Clock();
+                let time = 0;
 
                 (function animate() {
                     requestAnimationFrame(animate);
+                    const dt = Math.min(clock.getDelta(), 0.05);
                     if (!running) return;
-                    mx += (tx - mx) * 0.05; my += (ty - my) * 0.05;
-                    group.rotation.y += 0.0018; group.rotation.x = my; group.rotation.z = mx * 0.3;
-                    nodes.forEach(n => {
-                        n.position.add(n.userData.v);
-                        const len = n.position.length();
-                        if (len > 9 || len < 4) n.userData.v.multiplyScalar(-1);
+                    time += dt;
+
+                    // parallax: whole group eases toward pointer
+                    mx += (tx - mx) * 0.06; my += (ty - my) * 0.06;
+                    group.rotation.y += dt * 0.05;
+                    group.rotation.x = my * 0.5;
+                    group.rotation.z = mx * 0.18;
+
+                    // hub life: rotate + pulse glow
+                    hub.rotation.x += dt * 0.4; hub.rotation.y += dt * 0.55;
+                    const pulse = 1 + Math.sin(time * 1.8) * 0.06;
+                    hub.scale.setScalar(pulse);
+                    hubGlow.scale.setScalar(3.6 * (0.94 + Math.sin(time * 1.8) * 0.08));
+                    hubLight.intensity = 2.2 + Math.sin(time * 1.8) * 0.7;
+
+                    // hover pick
+                    if (hasPointer) {
+                        ray.setFromCamera(pointer, camera);
+                        const hit = ray.intersectObjects(pickables, false)[0];
+                        hoverNode = hit ? hit.object.userData.node : null;
+                        wrap.style.cursor = hoverNode ? 'pointer' : '';
+                    }
+
+                    nodes.forEach(node => {
+                        nodePos(node, time, node.pos);
+                        node.ng.position.copy(node.pos);
+
+                        // hover scale + colour toward accent
+                        node.hovered = (node === hoverNode);
+                        const ts = node.hovered ? 1.4 : 1;
+                        node.scale += (ts - node.scale) * 0.18;
+                        node.ng.scale.setScalar(node.scale);
+                        node.mat.color.copy(node.baseColor).lerp(accentCol, node.hovered ? 0.85 : 0);
+                        node.mat.emissive.copy(node.baseColor).lerp(accentCol, node.hovered ? 0.85 : 0);
+                        node.mat.emissiveIntensity = node.hovered ? 0.95 : 0.55;
+
+                        // connector geometry: hub(0,0,0) -> node
+                        const pa = node.line.geometry.attributes.position.array;
+                        pa[0] = 0; pa[1] = 0; pa[2] = 0;
+                        pa[3] = node.pos.x; pa[4] = node.pos.y; pa[5] = node.pos.z;
+                        node.line.geometry.attributes.position.needsUpdate = true;
+
+                        // click flash travels the wire, boosts opacity/colour
+                        if (node.flash > 0) {
+                            node.flash = Math.max(0, node.flash - dt * 1.6);
+                            node.line.material.opacity = 0.26 + node.flash * 0.7;
+                            node.line.material.color.copy(accent2Col).lerp(accentCol, node.flash);
+                            const u = 1 - node.flash; // hub -> node
+                            node.pulse.position.copy(node.pos).multiplyScalar(u);
+                            node.pulse.scale.setScalar(0.9 + node.flash * 1.4);
+                            node.pulse.material.opacity = node.flash;
+                            if (node.flash === 0) node.pulse.visible = false;
+                        } else {
+                            node.line.material.opacity = node.hovered ? 0.55 : 0.24;
+                            node.line.material.color.copy(node.hovered ? accentCol : accent2Col);
+                        }
+
+                        // data-flow packets
+                        node.packets.forEach(p => {
+                            p.t += dt * p.sp;
+                            if (p.t > 1) p.t -= 1;
+                            const u = p.dir === 'in' ? (1 - p.t) : p.t; // in: node->hub, out: hub->node
+                            p.mesh.position.copy(node.pos).multiplyScalar(u);
+                        });
                     });
-                    rebuild();
+
+                    // position hovered label in screen space
+                    if (hoverNode) {
+                        hoverNode.ng.getWorldPosition(wv);
+                        wv.y += 0.5 * hoverNode.scale;
+                        wv.project(camera);
+                        if (wv.z < 1) {
+                            labelEl.textContent = hoverNode.svc.name;
+                            labelEl.style.left = ((wv.x * 0.5 + 0.5) * w()) + 'px';
+                            labelEl.style.top = ((-wv.y * 0.5 + 0.5) * h()) + 'px';
+                            labelEl.classList.add('show');
+                        } else {
+                            labelEl.classList.remove('show');
+                        }
+                    } else {
+                        labelEl.classList.remove('show');
+                    }
+
                     renderer.render(scene, camera);
                 })();
             }
