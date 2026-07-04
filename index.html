@@ -1318,6 +1318,45 @@
         @media (prefers-reduced-motion: reduce) {
             * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
         }
+
+        /* ===================== SCROLL ANIMATION SYSTEM ===================== */
+        :root { --ease-out: cubic-bezier(.22, .61, .36, 1); }
+
+        /* thin scroll-progress bar */
+        .scroll-progress {
+            position: fixed; top: 0; left: 0; height: 2px; width: 0%;
+            background: var(--gradient-1); box-shadow: 0 0 12px var(--accent-glow);
+            z-index: 200; transition: width .1s linear; pointer-events: none;
+        }
+
+        /* reveal: only hidden once JS confirms animation is on (no-JS stays visible) */
+        html.anim-ready .sr {
+            opacity: 0; transform: translateY(34px);
+            transition: opacity .75s var(--ease-out), transform .75s var(--ease-out);
+            transition-delay: var(--d, 0s); will-change: opacity, transform;
+        }
+        html.anim-ready .sr.sr-left  { transform: translateX(-46px); }
+        html.anim-ready .sr.sr-right { transform: translateX(46px); }
+        html.anim-ready .sr.sr-zoom  { transform: scale(.9); }
+        html.anim-ready .sr.sr-blur  { filter: blur(8px); transition: opacity .75s var(--ease-out), transform .75s var(--ease-out), filter .75s var(--ease-out); }
+        html.anim-ready .sr.in { opacity: 1; transform: none; filter: none; }
+
+        /* section titles: gradient underline that grows in on reveal */
+        .section-title { position: relative; display: inline-block; }
+        .section-header { display: flex; flex-direction: column; align-items: center; }
+        .section-title::after {
+            content: ""; position: absolute; left: 50%; bottom: -14px; height: 2px; width: 0;
+            transform: translateX(-50%); background: var(--gradient-1); border-radius: 2px;
+            transition: width .8s var(--ease-out) .25s;
+        }
+        html.anim-ready .section-header.in .section-title::after { width: 62px; }
+
+        /* nav scroll-spy active state */
+        nav a.active { color: var(--accent); }
+        nav a.active::after { width: 100%; }
+
+        /* subtle parallax hooks (JS-driven) */
+        .hero-text, .hero-visual { will-change: transform; }
     </style>
 </head>
 <body>
@@ -1326,6 +1365,7 @@
 <div class="bg-glow bg-glow-2"></div>
 <canvas id="bgCanvas"></canvas>
 <div class="grain"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
 <header>
 <div class="container">
 <a class="logo" href="#">petr<span>-ai</span></a>
@@ -2075,23 +2115,105 @@
 </div>
 </footer>
 <script>
-        // Scroll reveal - add hidden class via JS so content is visible without JS
-        const reveals = document.querySelectorAll('.reveal');
-        reveals.forEach(el => el.classList.add('hidden'));
+        // ===================== SCROLL ANIMATION SYSTEM =====================
+        const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        const revealOnScroll = () => {
-            reveals.forEach(element => {
-                const elementTop = element.getBoundingClientRect().top;
-                const windowHeight = window.innerHeight;
-                if (elementTop < windowHeight - 60) {
-                    element.classList.remove('hidden');
-                    element.classList.add('active');
-                }
+        (function scrollAnimations() {
+            if (prefersReduced) return; // leave content statically visible
+
+            document.documentElement.classList.add('anim-ready');
+
+            // Build the set of elements to animate.
+            const targets = new Set();
+            document.querySelectorAll('.reveal').forEach(el => targets.add(el));
+            // container-level reveals -> animate their children individually for stagger
+            document.querySelectorAll('.tech-grid, .how-steps').forEach(box => {
+                box.classList.remove('reveal');
+                box.querySelectorAll('.tech-item, .how-step').forEach(el => targets.add(el));
             });
-        };
 
-        window.addEventListener('scroll', revealOnScroll);
-        revealOnScroll();
+            // Assign variants + per-parent stagger delay
+            targets.forEach(el => {
+                el.classList.add('sr');
+                if (el.classList.contains('tech-item')) el.classList.add('sr-zoom');
+                else if (el.classList.contains('project-card') && !el.classList.contains('featured')) {
+                    // alternate side entrance for the standard project grid
+                    const sibs = [...el.parentElement.children].filter(c => c.classList.contains('project-card') && !c.classList.contains('featured'));
+                    el.classList.add(sibs.indexOf(el) % 2 ? 'sr-right' : 'sr-left');
+                } else if (el.classList.contains('featured')) el.classList.add('sr-blur');
+            });
+            targets.forEach(el => {
+                const group = [...el.parentElement.children].filter(c => targets.has(c));
+                const i = group.indexOf(el);
+                el.style.setProperty('--d', Math.min(i * 0.07, 0.42) + 's');
+            });
+
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+            targets.forEach(el => io.observe(el));
+        })();
+
+        // Animated stat count-up (once, when hero stats enter)
+        (function countUp() {
+            if (prefersReduced) return;
+            const nums = document.querySelectorAll('.stat-number');
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (!e.isIntersecting) return;
+                    io.unobserve(e.target);
+                    const el = e.target;
+                    const raw = el.textContent.trim();
+                    const target = parseInt(raw, 10);
+                    if (isNaN(target)) return;
+                    const suffix = raw.replace(/[0-9]/g, '');
+                    const dur = 1200, t0 = performance.now();
+                    (function tick(now) {
+                        const p = Math.min((now - t0) / dur, 1);
+                        const eased = 1 - Math.pow(1 - p, 3);
+                        el.textContent = Math.round(target * eased) + suffix;
+                        if (p < 1) requestAnimationFrame(tick);
+                    })(t0);
+                });
+            }, { threshold: 0.6 });
+            nums.forEach(n => io.observe(n));
+        })();
+
+        // Scroll-progress bar + subtle hero parallax + nav scroll-spy
+        (function scrollFx() {
+            const bar = document.getElementById('scrollProgress');
+            const heroText = document.querySelector('.hero-text');
+            const heroVisual = document.querySelector('.hero-visual');
+            const spyLinks = [...document.querySelectorAll('nav a[href^="#"]')];
+            const sections = spyLinks.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+            const canParallax = !prefersReduced && !matchMedia('(pointer: coarse)').matches;
+            let ticking = false;
+
+            function update() {
+                const y = scrollY;
+                const docH = document.documentElement.scrollHeight - innerHeight;
+                if (bar) bar.style.width = (docH > 0 ? (y / docH) * 100 : 0) + '%';
+
+                if (canParallax && y < innerHeight) {
+                    if (heroText) heroText.style.transform = `translateY(${y * 0.12}px)`;
+                    if (heroVisual) heroVisual.style.transform = `translateY(${y * -0.06}px)`;
+                }
+
+                // scroll-spy
+                const pos = y + innerHeight * 0.32;
+                let current = -1;
+                sections.forEach((s, i) => { if (s.offsetTop <= pos) current = i; });
+                spyLinks.forEach((a, i) => a.classList.toggle('active', i === current));
+
+                ticking = false;
+            }
+            addEventListener('scroll', () => {
+                if (!ticking) { requestAnimationFrame(update); ticking = true; }
+            }, { passive: true });
+            update();
+        })();
 
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
