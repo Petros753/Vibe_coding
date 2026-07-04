@@ -15,21 +15,24 @@
 <meta name="twitter:description" content="Автоматизирую продажи, поддержку и контент через AI + n8n. 50+ проектов."/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
-<noscript><link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript><link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet"/></noscript>
 <style>
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-card: #1a1a24;
-            --accent: #ff6b35;
-            --accent-glow: rgba(255, 107, 53, 0.4);
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0b0;
-            --text-muted: #606070;
-            --border: #2a2a3a;
-            --gradient-1: linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%);
-            --gradient-2: linear-gradient(135deg, #1a1a24 0%, #0a0a0f 100%);
+            --bg-primary: #050810;
+            --bg-secondary: #0a0f1c;
+            --bg-card: rgba(18, 28, 46, 0.55);
+            --bg-solid: #101a2e;
+            --accent: #34d399;
+            --accent-2: #5b9bd5;
+            --accent-glow: rgba(52, 211, 153, 0.32);
+            --text-primary: #e9eef6;
+            --text-secondary: #9aa7bd;
+            --text-muted: #5c6a80;
+            --border: rgba(120, 150, 190, 0.14);
+            --gradient-1: linear-gradient(115deg, #7db4e6 0%, #34d399 100%);
+            --gradient-2: linear-gradient(140deg, #0a1628 0%, #1e3a5f 100%);
+            --gradient-em: linear-gradient(140deg, #0d2818 0%, #1a5c3a 100%);
         }
 
         * {
@@ -1167,12 +1170,162 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* ============================================================
+           PREMIUM REDESIGN LAYER — navy + emerald, 3D, glass, serif
+           ============================================================ */
+
+        /* Ambient depth behind everything */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -3;
+            pointer-events: none;
+            background:
+                radial-gradient(60% 50% at 82% 6%, rgba(30, 58, 95, 0.5), transparent 60%),
+                radial-gradient(55% 45% at 10% 26%, rgba(13, 40, 24, 0.55), transparent 60%),
+                radial-gradient(70% 60% at 50% 112%, rgba(26, 92, 58, 0.22), transparent 60%);
+        }
+        /* Kill the old orange grid, use WebGL/particle canvas + grain instead */
+        .bg-grid { display: none; }
+        .bg-glow { display: none; }
+        #bgCanvas {
+            position: fixed; inset: 0; z-index: -2; pointer-events: none; opacity: 0.5;
+        }
+        .grain {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0.045;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* Serif accent headings */
+        .hero h1, .section-title, .contact-title {
+            font-family: 'Fraunces', Georgia, serif;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+        }
+        .hero h1 { font-weight: 500; line-height: 1.05; }
+
+        /* Logo -> gradient */
+        .logo { color: var(--accent-2); }
+        .logo span {
+            background: var(--gradient-1);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* Header: navy glass */
+        header {
+            background: rgba(6, 10, 20, 0.55) !important;
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+            border-bottom-color: var(--border);
+        }
+
+        /* Glassmorphism on major cards */
+        .service-card, .project-card, .review-card, .contact-card,
+        .workflow-preview, .how-step-num, .tech-logo {
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        }
+        .service-card:hover, .project-card:hover,
+        .review-card:hover { border-color: rgba(120, 150, 190, 0.4); }
+        .service-card::before { background: var(--gradient-1); }
+
+        /* Buttons: emerald glow, dark text */
+        .cta-button { color: #04140d; font-weight: 600; box-shadow: 0 10px 30px -12px var(--accent-glow); }
+        .cta-button:hover { box-shadow: 0 16px 42px -12px var(--accent-glow); }
+
+        /* SVG icons replace emoji everywhere */
+        .service-icon svg { width: 27px; height: 27px; stroke: #7fe8c0; fill: none;
+            stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+        .service-icon { background: var(--gradient-2); border: 1px solid var(--border); }
+        .contact-link-icon svg { width: 19px; height: 19px; stroke: currentColor; fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .node-icon svg, .project-node-icon svg { width: 15px; height: 15px; stroke: #fff; fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* Tech stack: monochrome SVG grid */
+        .tech-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 16px; }
+        .tech-item {
+            opacity: 1; flex-direction: column; align-items: center; justify-content: center;
+            aspect-ratio: 1; border: 1px solid var(--border); border-radius: 14px;
+            background: var(--bg-card); transition: transform .35s ease, border-color .35s ease, background .35s ease;
+        }
+        .tech-item:hover { transform: translateY(-4px); border-color: rgba(120,150,190,.35); background: rgba(30,58,95,.2); }
+        .tech-logo { background: transparent; width: auto; height: auto; }
+        .tech-logo svg { width: 30px; height: 30px; stroke: var(--text-primary); fill: none;
+            stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .82; transition: stroke .35s, opacity .35s; }
+        .tech-item:hover .tech-logo svg { stroke: #7fe8c0; opacity: 1; }
+        .tech-name { font-family: 'Space Mono', monospace; font-size: .78rem; }
+
+        /* Project type badges + variants */
+        .project-type {
+            display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px;
+            border-radius: 100px; border: 1px solid rgba(52,211,153,.24);
+            background: rgba(52,211,153,.06); color: var(--accent);
+            font-size: .7rem; margin-bottom: 12px;
+        }
+        .project-type.blue { color: var(--accent-2); border-color: rgba(91,155,213,.24); background: rgba(91,155,213,.06); }
+        .project-card h3 { letter-spacing: -.01em; }
+        .project-card p strong { color: var(--accent) !important; }
+        .project-image-pattern {
+            background-image:
+                linear-gradient(135deg, var(--accent-2) 25%, transparent 25%),
+                linear-gradient(225deg, var(--accent-2) 25%, transparent 25%),
+                linear-gradient(45deg, var(--accent-2) 25%, transparent 25%),
+                linear-gradient(315deg, var(--accent-2) 25%, transparent 25%);
+            opacity: .06;
+        }
+
+        /* new workflow node accent colors */
+        .node-supabase { background: #3ecf8e; }
+        .node-postgres { background: #336791; }
+        .node-react { background: #58c4dc; }
+        .node-fastapi { background: #05998b; }
+        .node-bun { background: #f3d29a; }
+        .node-expo { background: #4c5ae0; }
+        .node-security { background: #2ecc71; }
+        .node-drive { background: #3b82f6; }
+
+        /* 3D tilt on project cards */
+        .project-card { transform-style: preserve-3d; will-change: transform; }
+
+        /* Hero: 3D canvas inside the glass frame */
+        .hero-3d { position: relative; height: 460px; }
+        #heroCanvas { width: 100%; height: 100%; display: block; border-radius: 16px; }
+        .hero-3d-fallback {
+            position: absolute; inset: 0; display: none; place-items: center;
+        }
+        .hero-3d.static #heroCanvas { display: none; }
+        .hero-3d.static .hero-3d-fallback { display: grid; }
+        .workflow-preview { background: var(--bg-card); border-color: var(--border); }
+
+        /* Stat numbers -> gradient */
+        .stat-number {
+            background: var(--gradient-1);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero h1 .highlight { background: var(--gradient-1); -webkit-background-clip: text;
+            background-clip: text; -webkit-text-fill-color: transparent; }
+
+        @media (max-width: 980px) {
+            .tech-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .tech-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 900px) {
+            .hero-3d { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+        }
     </style>
 </head>
 <body>
 <div class="bg-grid"></div>
 <div class="bg-glow bg-glow-1"></div>
 <div class="bg-glow bg-glow-2"></div>
+<canvas id="bgCanvas"></canvas>
+<div class="grain"></div>
 <header>
 <div class="container">
 <a class="logo" href="#">petr<span>-ai</span></a>
@@ -1242,39 +1395,15 @@
 <span></span>
 <span></span>
 </div>
-<div class="workflow-nodes">
-<div class="workflow-row">
-<div class="node">
-<div class="node-icon node-webhook">⚡</div>
-                                        Webhook
-                                    </div>
-<div class="connector"></div>
-<div class="node">
-<div class="node-icon node-ai">🤖</div>
-                                        Claude AI
-                                    </div>
-</div>
-<div class="workflow-row">
-<div class="node">
-<div class="node-icon node-telegram">✈️</div>
-                                        Telegram
-                                    </div>
-<div class="connector"></div>
-<div class="node">
-<div class="node-icon node-sheets">📊</div>
-                                        Google Sheets
-                                    </div>
-</div>
-<div class="workflow-row">
-<div class="node">
-<div class="node-icon node-http">🔗</div>
-                                        HTTP Request
-                                    </div>
-<div class="connector"></div>
-<div class="node">
-<div class="node-icon node-ai">✨</div>
-                                        Transform
-                                    </div>
+<div class="hero-3d" id="hero3d">
+<canvas id="heroCanvas"></canvas>
+<div class="hero-3d-fallback">
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none">
+<path d="M32 40 80 80M80 80 128 46M80 80 54 122M80 80 120 120M32 40 40 108" stroke="rgba(120,150,190,.45)" stroke-width="1.5"/>
+<circle cx="32" cy="40" r="7" fill="#5b9bd5"/><circle cx="80" cy="80" r="9" fill="#34d399"/>
+<circle cx="128" cy="46" r="7" fill="#5b9bd5"/><circle cx="54" cy="122" r="7" fill="#34d399"/>
+<circle cx="120" cy="120" r="7" fill="#5b9bd5"/><circle cx="40" cy="108" r="6" fill="#34d399"/>
+</svg>
 </div>
 </div>
 </div>
@@ -1294,7 +1423,7 @@
 </div>
 <div class="services-grid">
 <div class="service-card reveal">
-<div class="service-icon">🔄</div>
+<div class="service-icon"><svg viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg></div>
 <h3>Интеграция сервисов</h3>
 <p>Связываю CRM, мессенджеры, маркетплейсы и другие сервисы в единую экосистему</p>
 <p class="service-subline">Данные больше не теряются — всё синхронизируется автоматически.</p>
@@ -1305,7 +1434,7 @@
 </div>
 </div>
 <div class="service-card reveal">
-<div class="service-icon">🤖</div>
+<div class="service-icon"><svg viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg></div>
 <h3>AI-автоматизация</h3>
 <p>Внедряю нейросети в бизнес-процессы: генерация контента, анализ данных, чат-боты</p>
 <p class="service-subline">Бот отвечает вместо менеджера 24/7 и разгружает команду.</p>
@@ -1316,7 +1445,7 @@
 </div>
 </div>
 <div class="service-card reveal">
-<div class="service-icon">📱</div>
+<div class="service-icon"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></div>
 <h3>Telegram-боты</h3>
 <p>Разрабатываю ботов для бизнеса с интеграцией в CRM, системы бронирования и аналитику</p>
 <p class="service-subline">Заявки приходят без менеджера: бот ведёт до контакта/записи.</p>
@@ -1327,7 +1456,7 @@
 </div>
 </div>
 <div class="service-card reveal">
-<div class="service-icon">🖥️</div>
+<div class="service-icon"><svg viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2.5"/><path d="M9 6h6M12 17h.01"/></svg></div>
 <h3>Telegram Mini Apps</h3>
 <p>Разрабатываю полноценные веб-приложения внутри Telegram: каталоги, магазины, личные кабинеты, формы заявок — с автоматизацией на бэкенде через n8n</p>
 <p class="service-subline">Клиент не выходит из мессенджера — оформляет заказ прямо в боте.</p>
@@ -1338,7 +1467,7 @@
 </div>
 </div>
 <div class="service-card reveal">
-<div class="service-icon">🛒</div>
+<div class="service-icon"><svg viewBox="0 0 24 24"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></div>
 <h3>Маркетплейсы</h3>
 <p>Автоматизирую работу с Wildberries, Ozon, Яндекс.Маркет: перенос товаров, синхронизация</p>
 <p class="service-subline">Обновление товаров без ручного труда: остатки, цены, карточки.</p>
@@ -1429,17 +1558,17 @@
 <div class="project-image-pattern"></div>
 <div class="project-workflow">
 <div class="project-node">
-<div class="project-node-icon node-telegram">✈️</div>
+<div class="project-node-icon node-telegram"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></div>
                                     Telegram
                                 </div>
 <div class="project-connector"></div>
 <div class="project-node">
-<div class="project-node-icon node-fal">🎨</div>
+<div class="project-node-icon node-fal"><svg viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></div>
                                     fal.ai
                                 </div>
 <div class="project-connector"></div>
 <div class="project-node">
-<div class="project-node-icon node-telegram">📤</div>
+<div class="project-node-icon node-telegram"><svg viewBox="0 0 24 24"><path d="M22 2 11 13 2 9l20-7-7 20-4-9"/></svg></div>
                                     Send
                                 </div>
 </div>
@@ -1491,17 +1620,17 @@
 <div class="project-image-pattern"></div>
 <div class="project-workflow">
 <div class="project-node">
-<div class="project-node-icon node-telegram">✈️</div>
+<div class="project-node-icon node-telegram"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></div>
                                     Bot
                                 </div>
 <div class="project-connector"></div>
 <div class="project-node">
-<div class="project-node-icon node-face">👤</div>
+<div class="project-node-icon node-face"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg></div>
                                     FaceSwap
                                 </div>
 <div class="project-connector"></div>
 <div class="project-node">
-<div class="project-node-icon node-telegram">📤</div>
+<div class="project-node-icon node-telegram"><svg viewBox="0 0 24 24"><path d="M22 2 11 13 2 9l20-7-7 20-4-9"/></svg></div>
                                     Reply
                                 </div>
 </div>
@@ -1541,6 +1670,111 @@
 <span>Telegram</span>
 <span>OpenAI</span>
 <span>n8n</span>
+</div>
+</div>
+</div>
+<!-- New projects (11–14) -->
+<div class="project-card featured reveal">
+<div class="project-image">
+<div class="project-image-pattern"></div>
+<div class="project-workflow">
+<div class="project-node"><div class="project-node-icon node-telegram"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></div>Telegram</div>
+<div class="project-connector"></div>
+<div class="project-node"><div class="project-node-icon node-ai"><svg viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg></div>AI Agent</div>
+<div class="project-connector"></div>
+<div class="project-node"><div class="project-node-icon node-supabase"><svg viewBox="0 0 24 24"><path d="M13 2 5 13h7l-1 9 8-11h-7Z"/></svg></div>Supabase</div>
+<div class="project-connector"></div>
+<div class="project-node"><div class="project-node-icon node-postgres"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/></svg></div>Postgres</div>
+</div>
+</div>
+<div class="project-content">
+<div class="project-type">AI-бот + CRM</div>
+<h3>Sun Self — бот записи + CRM для beauty-студии</h3>
+<p>Telegram-бот на n8n с RAG на Supabase Vector Store и памятью в PostgreSQL: голосовой ввод через Whisper, проверка свободных слотов из базы клиентов и бронирование прямо в чате. Плюс кастомная CRM на React + PostgREST — записи, мастера, услуги, расходы и дашборд с KPI. <strong>Всё под контролем клиента, без внешних SaaS.</strong></p>
+<div class="project-stack">
+<span>n8n</span>
+<span>Supabase Vector</span>
+<span>Whisper</span>
+<span>PostgreSQL</span>
+<span>React</span>
+<span>PostgREST</span>
+<span>OpenAI</span>
+</div>
+</div>
+</div>
+<div class="project-card reveal">
+<div class="project-image">
+<div class="project-image-pattern"></div>
+<div class="project-workflow">
+<div class="project-node"><div class="project-node-icon node-react"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="9" ry="4"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(120 12 12)"/></svg></div>Mini App</div>
+<div class="project-connector"></div>
+<div class="project-node"><div class="project-node-icon node-fastapi"><svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9Z"/></svg></div>FastAPI</div>
+<div class="project-connector"></div>
+<div class="project-node"><div class="project-node-icon node-postgres"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/></svg></div>Postgres</div>
+</div>
+</div>
+<div class="project-content">
+<div class="project-type blue">CRM + Mini App</div>
+<h3>AI Realtor — CRM для агентства недвижимости (Пхукет)</h3>
+<p>CRM для рынка новостроек Пхукета: админ-панель на React + FastAPI + PostgreSQL — каталог ЖК → корпуса → квартиры → медиа и прайс-листы, роли и права, аналитика продаж, учёт наличия и интеграция с Google Drive. Для агентов — Telegram Mini App с поиском по фильтрам и формированием КП в один клик.</p>
+<div class="project-stack">
+<span>React</span>
+<span>FastAPI</span>
+<span>PostgreSQL</span>
+<span>Telegram Mini App</span>
+<span>Google Drive API</span>
+</div>
+</div>
+</div>
+<div class="project-card reveal">
+<div class="project-image">
+<div class="project-image-pattern"></div>
+<div class="project-workflow">
+<div class="project-node"><div class="project-node-icon node-security"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></div>Scan</div>
+<div class="project-connector"></div>
+<div class="project-node"><div class="project-node-icon node-ai"><svg viewBox="0 0 24 24"><path d="M20 7 9 18l-5-5"/></svg></div>40+ checks</div>
+<div class="project-connector"></div>
+<div class="project-node"><div class="project-node-icon node-telegram"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></div>Alerts</div>
+</div>
+</div>
+<div class="project-content">
+<div class="project-type">Open Source · Security</div>
+<h3>SmartHome Security Auditor</h3>
+<p>Собственный open-source CLI (MIT) для аудита безопасности умного дома: находит IoT-устройства в сети и прогоняет 40+ проверок — дефолтные пароли, HTTP/SSL, telnet/SSH, UPnP, CORS, известные CVE. Home Assistant, Tuya, Xiaomi, Zigbee, MQTT. Отчёты в HTML/JSON/консоль, Telegram-алерты на critical. <strong>Python 3.11 + async — системная экспертиза за пределами n8n.</strong></p>
+<div class="project-stack">
+<span>Python</span>
+<span>async · aiohttp</span>
+<span>IoT Security</span>
+<span>SQLite</span>
+<span>MIT</span>
+</div>
+</div>
+</div>
+<div class="project-card reveal">
+<div class="project-image">
+<div class="project-image-pattern"></div>
+<div class="project-workflow">
+<div class="project-node"><div class="project-node-icon node-expo"><svg viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2.5"/><path d="M12 18h.01"/></svg></div>Mobile</div>
+<div class="project-connector"></div>
+<div class="project-node"><div class="project-node-icon node-bun"><svg viewBox="0 0 24 24"><path d="M12 4c5 0 9 3.4 9 7.6S17 20 12 20s-9-3.6-9-8.4S7 4 12 4Z"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/></svg></div>Bun · Hono</div>
+<div class="project-connector"></div>
+<div class="project-node"><div class="project-node-icon node-postgres"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/></svg></div>Postgres</div>
+</div>
+</div>
+<div class="project-content">
+<div class="project-type blue">Mobile App + SaaS</div>
+<h3>МойДом — нативное приложение для управляющих компаний</h3>
+<p>Полноценное мобильное приложение для жильцов (не бот и не мини-апп): заявки в УК с фото, показания счётчиков, объявления, чат на WebSocket, push-уведомления. React Native / Expo, сборка APK через EAS. Бэкенд на Bun + Hono + PostgreSQL/Prisma + Redis, JWT + Firebase Phone Auth, мультитенантная архитектура. Плюс админ-панель для УК. <strong>Домофон и камеры — в роадмапе.</strong></p>
+<div class="project-stack">
+<span>React Native</span>
+<span>Expo</span>
+<span>Bun</span>
+<span>Hono</span>
+<span>PostgreSQL</span>
+<span>Prisma</span>
+<span>Redis</span>
+<span>WebSocket</span>
+<span>Firebase Auth</span>
 </div>
 </div>
 </div>
@@ -1793,42 +2027,22 @@
 <h2 class="section-title">Стек</h2>
 </div>
 <div class="tech-grid reveal">
-<div class="tech-item">
-<div class="tech-logo">⚙️</div>
-<div class="tech-name">n8n</div>
-</div>
-<div class="tech-item">
-<div class="tech-logo">🐍</div>
-<div class="tech-name">Python</div>
-</div>
-<div class="tech-item">
-<div class="tech-logo">🤖</div>
-<div class="tech-name">Claude API</div>
-</div>
-<div class="tech-item">
-<div class="tech-logo">🖥️</div>
-<div class="tech-name">Mini Apps</div>
-</div>
-<div class="tech-item">
-<div class="tech-logo">💬</div>
-<div class="tech-name">Telegram</div>
-</div>
-<div class="tech-item">
-<div class="tech-logo">📊</div>
-<div class="tech-name">Google Sheets</div>
-</div>
-<div class="tech-item">
-<div class="tech-logo">🗄️</div>
-<div class="tech-name">PostgreSQL</div>
-</div>
-<div class="tech-item">
-<div class="tech-logo">🔗</div>
-<div class="tech-name">REST API</div>
-</div>
-<div class="tech-item">
-<div class="tech-logo">🐳</div>
-<div class="tech-name">Docker</div>
-</div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.6 11 15.6 6.8M8.6 13l7 4.2"/></svg></div><div class="tech-name">n8n</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><path d="M12 2c-2.5 0-4 1-4 3v3h5M8 8H5c-2 0-3 1.5-3 4s1 4 3 4h3M12 22c2.5 0 4-1 4-3v-3h-5M16 16h3c2 0 3-1.5 3-4s-1-4-3-4h-3"/></svg></div><div class="tech-name">Python</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><path d="M4 18 9 6l3 8 3-8 5 12M7 14h4M13 14h4"/></svg></div><div class="tech-name">Claude API</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></div><div class="tech-name">Telegram</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div><div class="tech-name">PostgreSQL</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><rect x="3" y="10" width="4" height="4"/><rect x="8" y="10" width="4" height="4"/><rect x="8" y="5" width="4" height="4"/><rect x="13" y="10" width="4" height="4"/><path d="M20 12s1.4 0 1.9-1c-.5-1-1.9-1-1.9-1M2 15c0 3 3 5 8 5 6 0 10-3 11-8"/></svg></div><div class="tech-name">Docker</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(120 12 12)"/></svg></div><div class="tech-name">React</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(45 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-45 12 12)"/></svg></div><div class="tech-name">React Native</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><path d="M12 3 3 20h4l5-9 5 9h4Z"/></svg></div><div class="tech-name">Expo</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m13 7-4 6h4l-1 4 4-6h-4Z"/></svg></div><div class="tech-name">FastAPI</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><path d="M12 4c5 0 9 3.4 9 7.6S17 20 12 20s-9-3.6-9-8.4S7 4 12 4Z"/><circle cx="9.5" cy="12" r="1"/><circle cx="14.5" cy="12" r="1"/><path d="M10.5 14.5a2 2 0 0 0 3 0"/></svg></div><div class="tech-name">Bun</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><path d="M12 2C9 7 5 9 5 13a7 7 0 0 0 14 0c0-4-4-6-7-11Z"/></svg></div><div class="tech-name">Hono</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><path d="M13 2 5 13h7l-1 9 8-11h-7Z"/></svg></div><div class="tech-name">Supabase</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><path d="M5 16 12 3l6 15-6 3Z"/><path d="M5 16 12 6"/></svg></div><div class="tech-name">Prisma</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div><div class="tech-name">Redis</div></div>
+<div class="tech-item"><div class="tech-logo"><svg viewBox="0 0 24 24"><path d="M3 12h6l2-4 3 8 2-4h5"/><circle cx="3" cy="12" r="1.3"/><circle cx="21" cy="12" r="1.3"/></svg></div><div class="tech-name">WebSocket</div></div>
 </div>
 </div>
 </section>
@@ -1842,7 +2056,7 @@
                     </p>
 <div class="contact-links">
 <a class="contact-link" href="https://t.me/Automatizacion007" target="_blank">
-<span class="contact-link-icon">✈️</span>
+<span class="contact-link-icon"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span>
                             Написать в Telegram
                         </a>
 </div>
@@ -1853,7 +2067,7 @@
 <footer>
 <div class="container">
 <div class="footer-text">
-                © 2025 <span>petr-ai</span> — Автоматизация бизнес-процессов
+                © 2026 <span>petr-ai</span> — Автоматизация бизнес-процессов
             </div>
 <div class="footer-text">
                 Астрахань, Россия
@@ -1907,6 +2121,133 @@
                 document.body.style.overflow = '';
             });
         });
+
+        /* ===================== PREMIUM REDESIGN JS ===================== */
+        const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const COARSE = matchMedia('(pointer: coarse)').matches;
+
+        /* 3D tilt on project cards (desktop, motion-ok only) */
+        if (!REDUCE && !COARSE) {
+            document.querySelectorAll('.project-card').forEach(card => {
+                card.addEventListener('mousemove', ev => {
+                    const r = card.getBoundingClientRect();
+                    const px = (ev.clientX - r.left) / r.width - 0.5;
+                    const py = (ev.clientY - r.top) / r.height - 0.5;
+                    card.style.transform = `perspective(1100px) rotateY(${px * 3.5}deg) rotateX(${-py * 3.5}deg) translateY(-8px)`;
+                });
+                card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+            });
+        }
+
+        /* Lightweight canvas particle-mesh background */
+        (function bg() {
+            if (REDUCE) return;
+            const c = document.getElementById('bgCanvas');
+            if (!c) return;
+            const ctx = c.getContext('2d');
+            let W, H, pts;
+            function resize() {
+                W = c.width = innerWidth; H = c.height = innerHeight;
+                const count = COARSE ? 24 : Math.min(56, Math.floor(W * H / 28000));
+                pts = Array.from({ length: count }, () => ({
+                    x: Math.random() * W, y: Math.random() * H,
+                    vx: (Math.random() - 0.5) * 0.24, vy: (Math.random() - 0.5) * 0.24
+                }));
+            }
+            resize(); addEventListener('resize', resize);
+            (function draw() {
+                ctx.clearRect(0, 0, W, H);
+                for (const p of pts) {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > W) p.vx *= -1;
+                    if (p.y < 0 || p.y > H) p.vy *= -1;
+                }
+                for (let i = 0; i < pts.length; i++) {
+                    for (let j = i + 1; j < pts.length; j++) {
+                        const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y, d = Math.hypot(dx, dy);
+                        if (d < 130) {
+                            ctx.strokeStyle = `rgba(91,155,213,${(1 - d / 130) * 0.11})`;
+                            ctx.lineWidth = 0.6;
+                            ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke();
+                        }
+                    }
+                    ctx.fillStyle = 'rgba(52,211,153,.3)';
+                    ctx.beginPath(); ctx.arc(pts[i].x, pts[i].y, 1.1, 0, 7); ctx.fill();
+                }
+                requestAnimationFrame(draw);
+            })();
+        })();
+
+        /* Three.js hero: floating nodes + connectors (lazy CDN, graceful fallback) */
+        (function hero() {
+            const wrap = document.getElementById('hero3d');
+            if (!wrap) return;
+            if (REDUCE || COARSE) { wrap.classList.add('static'); return; }
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+            s.onerror = () => wrap.classList.add('static');
+            s.onload = build;
+            document.head.appendChild(s);
+
+            function build() {
+                const THREE = window.THREE;
+                const canvas = document.getElementById('heroCanvas');
+                const w = () => wrap.clientWidth || 1, h = () => wrap.clientHeight || 1;
+                const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+                renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+                renderer.setSize(w(), h());
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(55, w() / h(), 0.1, 100);
+                camera.position.z = 14;
+                const group = new THREE.Group(); scene.add(group);
+
+                const N = 24, nodes = [];
+                const geo = new THREE.SphereGeometry(0.16, 16, 16);
+                const blue = new THREE.MeshBasicMaterial({ color: 0x5b9bd5 });
+                const em = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+                for (let i = 0; i < N; i++) {
+                    const m = new THREE.Mesh(geo, Math.random() > 0.5 ? blue : em);
+                    const rad = 5 + Math.random() * 3.4, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+                    m.position.set(rad * Math.sin(ph) * Math.cos(th), rad * Math.sin(ph) * Math.sin(th) * 0.72, rad * Math.cos(ph));
+                    m.userData.v = new THREE.Vector3((Math.random() - 0.5) * 0.006, (Math.random() - 0.5) * 0.006, (Math.random() - 0.5) * 0.006);
+                    group.add(m); nodes.push(m);
+                }
+                const lineMat = new THREE.LineBasicMaterial({ color: 0x3a6ea5, transparent: true, opacity: 0.28 });
+                const lines = new THREE.LineSegments(new THREE.BufferGeometry(), lineMat); group.add(lines);
+                function rebuild() {
+                    const arr = [];
+                    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++)
+                        if (nodes[i].position.distanceTo(nodes[j].position) < 4.2) arr.push(nodes[i].position, nodes[j].position);
+                    lines.geometry.setFromPoints(arr);
+                }
+                rebuild();
+
+                let tx = 0, ty = 0, mx = 0, my = 0;
+                wrap.addEventListener('mousemove', e => {
+                    const r = wrap.getBoundingClientRect();
+                    tx = ((e.clientX - r.left) / r.width - 0.5) * 0.5;
+                    ty = ((e.clientY - r.top) / r.height - 0.5) * 0.5;
+                });
+                wrap.addEventListener('mouseleave', () => { tx = 0; ty = 0; });
+                let running = true;
+                new IntersectionObserver(es => running = es[0].isIntersecting, { threshold: 0 }).observe(wrap);
+                addEventListener('resize', () => { camera.aspect = w() / h(); camera.updateProjectionMatrix(); renderer.setSize(w(), h()); });
+
+                (function animate() {
+                    requestAnimationFrame(animate);
+                    if (!running) return;
+                    mx += (tx - mx) * 0.05; my += (ty - my) * 0.05;
+                    group.rotation.y += 0.0018; group.rotation.x = my; group.rotation.z = mx * 0.3;
+                    nodes.forEach(n => {
+                        n.position.add(n.userData.v);
+                        const len = n.position.length();
+                        if (len > 9 || len < 4) n.userData.v.multiplyScalar(-1);
+                    });
+                    rebuild();
+                    renderer.render(scene, camera);
+                })();
+            }
+        })();
     </script>
 </body>
 </html>
