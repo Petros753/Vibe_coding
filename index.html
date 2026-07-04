@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#050810" />
+
+<!-- SEO -->
+<title>Пётр — AI & n8n Automation Developer | Автоматизация, боты, CRM</title>
+<meta name="description" content="Разработка AI-агентов, Telegram-ботов, автоматизаций на n8n, CRM и мобильных приложений под ключ. RAG-память, интеграции, аналитика. Астрахань, Россия." />
+<meta name="author" content="Пётр" />
+<meta name="keywords" content="n8n, AI-агент, Telegram-бот, автоматизация, CRM, RAG, Python, интеграции, чат-бот, разработка" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Пётр — AI & n8n Automation Developer" />
+<meta property="og:description" content="AI-агенты, Telegram-боты, автоматизации на n8n, CRM и мобильные приложения под ключ." />
+<meta property="og:url" content="https://petr-ai.ru" />
+<meta property="og:site_name" content="petr-ai.ru" />
+<meta property="og:locale" content="ru_RU" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Пётр — AI & n8n Automation Developer" />
+<meta name="twitter:description" content="AI-агенты, Telegram-боты, автоматизации на n8n, CRM и мобильные приложения под ключ." />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23050810'/%3E%3Cpath d='M8 20 L14 12 L18 18 L24 10' stroke='%2334d399' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='20' r='2.4' fill='%235b9bd5'/%3E%3Ccircle cx='24' cy='10' r='2.4' fill='%2334d399'/%3E%3C/svg%3E" />
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#050810;
+  --bg-2:#070c18;
+  --bg-3:#0a1120;
+  --navy:#1e3a5f;
+  --navy-deep:#0a1628;
+  --emerald:#1a5c3a;
+  --emerald-deep:#0d2818;
+  --blue:#5b9bd5;
+  --blue-soft:#7db4e6;
+  --em:#34d399;
+  --em-soft:#5fe0b0;
+  --text:#e9eef6;
+  --muted:#8b98ac;
+  --muted-2:#5c6a80;
+  --line:rgba(120,150,190,.13);
+  --line-2:rgba(120,150,190,.08);
+  --card:rgba(18,28,46,.55);
+  --card-2:rgba(14,22,38,.7);
+  --glow-blue:rgba(91,155,213,.5);
+  --glow-em:rgba(52,211,153,.5);
+  --grad-accent:linear-gradient(115deg,#7db4e6 0%,#34d399 100%);
+  --grad-navy:linear-gradient(140deg,#0a1628 0%,#1e3a5f 100%);
+  --grad-em:linear-gradient(140deg,#0d2818 0%,#1a5c3a 100%);
+  --shadow:0 24px 60px -20px rgba(0,0,0,.75);
+  --r:20px;
+  --r-sm:14px;
+  --maxw:1200px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Outfit',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:rgba(52,211,153,.28);color:#fff}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* ambient background layers */
+.bg-fx{position:fixed;inset:0;z-index:-3;pointer-events:none}
+.bg-fx::before{content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(60% 50% at 82% 8%, rgba(30,58,95,.5), transparent 60%),
+    radial-gradient(55% 45% at 12% 30%, rgba(13,40,24,.55), transparent 60%),
+    radial-gradient(70% 60% at 50% 110%, rgba(26,92,58,.28), transparent 60%);
+}
+#bg-canvas{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.55}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+/* ============ LAYOUT ============ */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+section{position:relative;padding:110px 0}
+.eyebrow{
+  font-family:'Space Mono',monospace;font-size:12.5px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--em);margin-bottom:16px;display:inline-flex;
+  align-items:center;gap:9px;
+}
+.eyebrow::before{content:"";width:26px;height:1px;background:linear-gradient(90deg,transparent,var(--em))}
+h2.title{
+  font-family:'Fraunces',serif;font-weight:500;font-size:clamp(30px,4.4vw,50px);
+  line-height:1.08;letter-spacing:-.01em;margin-bottom:18px;
+}
+.title .g{background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.lead{color:var(--muted);font-size:17px;max-width:620px}
+.sec-head{margin-bottom:56px}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+
+/* ============ HEADER ============ */
+header{position:fixed;top:0;left:0;right:0;z-index:50;transition:.4s var(--ease)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:72px}
+.nav-inner{
+  display:flex;align-items:center;justify-content:space-between;width:100%;
+  padding:0 22px;height:56px;border-radius:16px;margin-top:14px;
+  background:rgba(8,13,24,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--line);transition:.4s var(--ease);
+}
+header.scrolled .nav-inner{background:rgba(6,10,20,.82);box-shadow:0 12px 40px -18px rgba(0,0,0,.8)}
+.logo{display:flex;align-items:center;gap:11px;font-weight:600;font-size:16.5px;letter-spacing:-.01em;white-space:nowrap}
+.logo-mark{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;
+  background:var(--grad-navy);border:1px solid var(--line);}
+.logo-mark svg{width:18px;height:18px}
+.logo b{background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;align-items:center;gap:30px}
+.nav-links a{font-size:14.5px;color:var(--muted);transition:.25s;position:relative}
+.nav-links a:hover{color:var(--text)}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:-6px;height:1.5px;width:0;background:var(--grad-accent);transition:.3s var(--ease)}
+.nav-links a:hover::after{width:100%}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;font-weight:500;font-size:14.5px;
+  padding:11px 20px;border-radius:12px;transition:.3s var(--ease);white-space:nowrap;
+}
+.btn-primary{background:var(--grad-accent);color:#04140d;font-weight:600;box-shadow:0 10px 30px -10px var(--glow-em)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px -12px var(--glow-em)}
+.btn-ghost{border:1px solid var(--line);color:var(--text);background:rgba(255,255,255,.02)}
+.btn-ghost:hover{border-color:rgba(120,150,190,.35);background:rgba(255,255,255,.05)}
+.burger{display:none;width:44px;height:44px;border-radius:11px;border:1px solid var(--line);
+  background:rgba(255,255,255,.02);place-items:center}
+.burger svg{width:20px;height:20px}
+.mobile-menu{position:fixed;inset:0;z-index:49;background:rgba(4,7,14,.96);backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  opacity:0;pointer-events:none;transition:.4s var(--ease)}
+.mobile-menu.open{opacity:1;pointer-events:auto}
+.mobile-menu a{font-family:'Fraunces',serif;font-size:26px;color:var(--text);padding:8px}
+.mobile-menu .btn{margin-top:14px;font-size:17px;padding:14px 28px}
+
+/* ============ HERO ============ */
+.hero{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:40px;
+  padding-top:120px;padding-bottom:60px}
+.hero-badge{display:inline-flex;align-items:center;gap:9px;padding:7px 14px;border-radius:100px;
+  border:1px solid var(--line);background:rgba(255,255,255,.02);font-size:13px;color:var(--muted);margin-bottom:26px}
+.hero-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--em);box-shadow:0 0 12px var(--em);animation:pulse 2.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hero h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(38px,5.6vw,68px);line-height:1.04;
+  letter-spacing:-.02em;margin-bottom:22px}
+.hero h1 .g{background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:18px;color:var(--muted);max-width:520px;margin-bottom:34px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
+.hero-stats{display:flex;gap:36px;margin-top:44px;flex-wrap:wrap}
+.stat b{font-family:'Fraunces',serif;font-size:32px;font-weight:600;display:block;line-height:1;
+  background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat span{font-size:13px;color:var(--muted-2);letter-spacing:.02em}
+.hero-visual{position:relative;height:520px;border-radius:26px;overflow:hidden;
+  border:1px solid var(--line);background:
+   radial-gradient(120% 100% at 70% 10%,rgba(30,58,95,.4),transparent 55%),
+   radial-gradient(100% 90% at 20% 90%,rgba(13,40,24,.5),transparent 55%),
+   var(--bg-2);box-shadow:var(--shadow)}
+#hero-canvas{width:100%;height:100%;display:block}
+.hero-visual .fallback{position:absolute;inset:0;display:none;place-items:center;padding:30px}
+.hero-visual.static #hero-canvas{display:none}
+.hero-visual.static .fallback{display:grid}
+
+/* ============ SERVICES ============ */
+.grid-services{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.svc{
+  position:relative;padding:30px;border-radius:var(--r);border:1px solid var(--line);
+  background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  overflow:hidden;transition:.4s var(--ease)}
+.svc:hover{transform:translateY(-5px);border-color:rgba(120,150,190,.32)}
+.svc::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(120,150,190,.4),transparent);opacity:0;transition:.4s}
+.svc:hover::before{opacity:1}
+.svc-ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;margin-bottom:20px;
+  background:var(--grad-navy);border:1px solid var(--line)}
+.svc-ic svg{width:26px;height:26px;stroke:var(--em-soft)}
+.svc h3{font-size:20px;font-weight:600;margin-bottom:10px}
+.svc p{color:var(--muted);font-size:15px}
+.svc.wide{grid-column:span 1}
+
+/* ============ PROJECTS ============ */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:38px}
+.filter{padding:8px 16px;border-radius:100px;border:1px solid var(--line);font-size:13.5px;color:var(--muted);
+  background:rgba(255,255,255,.02);transition:.25s}
+.filter:hover{color:var(--text);border-color:rgba(120,150,190,.3)}
+.filter.active{background:var(--grad-accent);color:#04140d;font-weight:600;border-color:transparent}
+.grid-projects{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+.pcard{
+  position:relative;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;
+  background:var(--card-2);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  transition:border-color .4s var(--ease),box-shadow .4s var(--ease),transform .1s linear;
+  transform-style:preserve-3d;will-change:transform}
+.pcard:hover{border-color:rgba(120,150,190,.35);box-shadow:var(--shadow)}
+.pcard-media{position:relative;height:190px;overflow:hidden;
+  background:var(--grad-navy);border-bottom:1px solid var(--line)}
+.pcard-media.em{background:var(--grad-em)}
+.pcard-media .mono{position:absolute;top:16px;left:18px;width:40px;height:40px;border-radius:11px;
+  display:grid;place-items:center;background:rgba(5,8,16,.5);border:1px solid var(--line);
+  font-family:'Fraunces',serif;font-size:18px;transform:translateZ(30px)}
+.pcard-media .mono svg{width:22px;height:22px;stroke:var(--text);opacity:.92}
+.pcard-media .shine{position:absolute;inset:0;background:radial-gradient(60% 80% at 75% 20%,rgba(255,255,255,.09),transparent 55%);pointer-events:none}
+/* faux ui preview */
+.mock{position:absolute;right:16px;bottom:16px;left:74px;top:64px;border-radius:12px 12px 0 0;
+  background:rgba(5,9,17,.55);border:1px solid var(--line-2);border-bottom:none;overflow:hidden;
+  transform:translateZ(24px);box-shadow:0 20px 40px -20px rgba(0,0,0,.7)}
+.mock-bar{height:22px;display:flex;align-items:center;gap:5px;padding:0 10px;border-bottom:1px solid var(--line-2);background:rgba(255,255,255,.03)}
+.mock-bar i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}
+.mock-body{padding:12px;display:grid;gap:7px}
+.mock-body .row{height:8px;border-radius:4px;background:rgba(255,255,255,.08)}
+.mock-body .row.a{width:70%}.mock-body .row.b{width:90%;background:linear-gradient(90deg,rgba(91,155,213,.5),rgba(52,211,153,.3))}
+.mock-body .row.c{width:55%}
+.mock-tiles{display:flex;gap:7px;margin-top:4px}
+.mock-tiles span{flex:1;height:26px;border-radius:6px;background:rgba(255,255,255,.06)}
+.pcard-body{padding:24px}
+.pcard-type{display:inline-flex;align-items:center;gap:7px;font-family:'Space Mono',monospace;font-size:11px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--em);padding:5px 11px;border-radius:100px;
+  border:1px solid rgba(52,211,153,.24);background:rgba(52,211,153,.06);margin-bottom:14px}
+.pcard-type.blue{color:var(--blue-soft);border-color:rgba(91,155,213,.24);background:rgba(91,155,213,.06)}
+.pcard h3{font-size:19px;font-weight:600;margin-bottom:9px;letter-spacing:-.01em}
+.pcard p{color:var(--muted);font-size:14.5px;margin-bottom:16px}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);padding:4px 9px;border-radius:7px;
+  border:1px solid var(--line-2);background:rgba(255,255,255,.02)}
+.pcard.flag{grid-column:span 2}
+.pcard.flag .pcard-media{height:230px}
+@media(min-width:861px){
+  .pcard.flag{display:grid;grid-template-columns:1.1fr 1fr;align-items:stretch}
+  .pcard.flag .pcard-media{height:auto;border-bottom:none;border-right:1px solid var(--line)}
+  .pcard.flag .pcard-body{padding:34px}
+}
+
+/* ============ HOW ============ */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.step{position:relative;padding:28px 24px;border-radius:var(--r);border:1px solid var(--line);background:var(--card)}
+.step-n{font-family:'Space Mono',monospace;font-size:13px;color:var(--em);margin-bottom:18px;
+  display:inline-flex;width:38px;height:38px;border-radius:11px;align-items:center;justify-content:center;
+  border:1px solid rgba(52,211,153,.24);background:rgba(52,211,153,.06)}
+.step h3{font-size:17px;font-weight:600;margin-bottom:8px}
+.step p{color:var(--muted);font-size:14px}
+
+/* ============ REVIEWS ============ */
+.reviews{overflow:hidden}
+.marquee{display:flex;gap:20px;width:max-content;animation:scroll 46s linear infinite}
+.reviews:hover .marquee{animation-play-state:paused}
+@keyframes scroll{to{transform:translateX(-50%)}}
+.rev{width:380px;padding:28px;border-radius:var(--r);border:1px solid var(--line);
+  background:var(--card);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);flex-shrink:0}
+.rev-stars{display:flex;gap:3px;margin-bottom:14px;color:var(--em)}
+.rev-stars svg{width:16px;height:16px;fill:currentColor}
+.rev p{font-size:15px;color:var(--text);margin-bottom:18px;line-height:1.65}
+.rev-who{display:flex;align-items:center;gap:12px}
+.rev-av{width:42px;height:42px;border-radius:50%;background:var(--grad-navy);display:grid;place-items:center;
+  font-family:'Fraunces',serif;font-size:17px;color:var(--em-soft);border:1px solid var(--line)}
+.rev-who b{font-size:14.5px;font-weight:600;display:block}
+.rev-who span{font-size:12.5px;color:var(--muted-2)}
+.reviews-fade{position:relative}
+.reviews-fade::before,.reviews-fade::after{content:"";position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
+.reviews-fade::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+.reviews-fade::after{right:0;background:linear-gradient(270deg,var(--bg),transparent)}
+
+/* ============ TECH ============ */
+.tech-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:16px}
+.tech{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;
+  border-radius:var(--r-sm);border:1px solid var(--line);background:var(--card);transition:.35s var(--ease)}
+.tech:hover{transform:translateY(-4px);border-color:rgba(120,150,190,.35);background:rgba(30,58,95,.2)}
+.tech svg{width:30px;height:30px;stroke:var(--text);opacity:.85;transition:.35s}
+.tech:hover svg{stroke:var(--em-soft);opacity:1}
+.tech span{font-size:11.5px;color:var(--muted);font-family:'Space Mono',monospace}
+
+/* ============ CONTACT ============ */
+.contact-card{position:relative;border-radius:28px;overflow:hidden;padding:64px 48px;text-align:center;
+  border:1px solid var(--line);background:
+   radial-gradient(90% 120% at 80% 0%,rgba(30,58,95,.5),transparent 55%),
+   radial-gradient(90% 120% at 10% 100%,rgba(13,40,24,.55),transparent 55%),
+   var(--bg-2);box-shadow:var(--shadow)}
+.contact-card h2{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(30px,4.6vw,52px);
+  line-height:1.06;margin-bottom:18px}
+.contact-card h2 .g{background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.contact-card p{color:var(--muted);font-size:17px;max-width:520px;margin:0 auto 34px}
+.contact-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-lg{padding:15px 30px;font-size:16px;border-radius:14px}
+
+/* ============ FOOTER ============ */
+footer{border-top:1px solid var(--line);padding:44px 0 40px}
+.foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px}
+.foot .muted{color:var(--muted-2);font-size:13.5px}
+.foot-links{display:flex;gap:22px}
+.foot-links a{color:var(--muted);font-size:13.5px;transition:.25s}
+.foot-links a:hover{color:var(--em-soft)}
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:980px){
+  .grid-services{grid-template-columns:repeat(2,1fr)}
+  .tech-grid{grid-template-columns:repeat(5,1fr)}
+  .steps{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:860px){
+  section{padding:80px 0}
+  .nav-links{display:none}
+  .nav .btn-ghost{display:none}
+  .burger{display:grid}
+  .hero{grid-template-columns:1fr;padding-top:110px}
+  .hero-visual{height:360px;order:-1}
+  .grid-projects{grid-template-columns:1fr}
+  .pcard.flag{grid-column:span 1}
+  .contact-card{padding:48px 24px}
+}
+@media(max-width:560px){
+  .grid-services{grid-template-columns:1fr}
+  .tech-grid{grid-template-columns:repeat(3,1fr)}
+  .steps{grid-template-columns:1fr}
+  .rev{width:300px}
+  .hero-stats{gap:24px}
+  .nav .btn-primary{display:none}
+  .nav-inner{padding:0 16px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-fx"></div>
+<canvas id="bg-canvas"></canvas>
+<div class="grain"></div>
+
+<!-- ============ HEADER ============ -->
+<header id="header">
+  <div class="wrap">
+    <nav class="nav">
+      <div class="nav-inner">
+        <a href="#top" class="logo">
+          <span class="logo-mark">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 16 L10 8 L14 13 L20 6" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4" cy="16" r="1.8" fill="#5b9bd5"/><circle cx="20" cy="6" r="1.8" fill="#34d399"/></svg>
+          </span>
+          <span>petr<b>-ai</b>.ru</span>
+        </a>
+        <div class="nav-links">
+          <a href="#services">Услуги</a>
+          <a href="#projects">Проекты</a>
+          <a href="#how">Процесс</a>
+          <a href="#reviews">Отзывы</a>
+          <a href="#tech">Стек</a>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <a href="https://t.me/Automatizacion007" target="_blank" rel="noopener" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            Написать
+          </a>
+          <button class="burger" id="burger" aria-label="Меню">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#services">Услуги</a>
+  <a href="#projects">Проекты</a>
+  <a href="#how">Процесс</a>
+  <a href="#reviews">Отзывы</a>
+  <a href="#tech">Стек</a>
+  <a href="https://t.me/Automatizacion007" target="_blank" rel="noopener" class="btn btn-primary">Написать в Telegram</a>
+</div>
+
+<a id="top"></a>
+
+<!-- ============ HERO ============ -->
+<div class="wrap">
+  <section class="hero">
+    <div class="reveal in">
+      <span class="hero-badge"><span class="dot"></span>Открыт для новых проектов</span>
+      <h1>Автоматизирую бизнес<br>с помощью <span class="g">AI&nbsp;и&nbsp;n8n</span></h1>
+      <p>Проектирую AI-агентов, Telegram-ботов, автоматизации и CRM под ключ. От первого сообщения клиента до аналитики в дашборде — всё работает без вашего участия.</p>
+      <div class="hero-cta">
+        <a href="#projects" class="btn btn-primary btn-lg">Смотреть проекты</a>
+        <a href="https://t.me/Automatizacion007" target="_blank" rel="noopener" class="btn btn-ghost btn-lg">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          @Automatizacion007
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><b>14+</b><span>проектов в проде</span></div>
+        <div class="stat"><b>40+</b><span>интеграций</span></div>
+        <div class="stat"><b>24/7</b><span>работают без сна</span></div>
+      </div>
+    </div>
+    <div class="hero-visual" id="heroVisual">
+      <canvas id="hero-canvas"></canvas>
+      <div class="fallback">
+        <div style="text-align:center">
+          <svg width="120" height="120" viewBox="0 0 120 120" fill="none" opacity=".9">
+            <circle cx="24" cy="30" r="6" fill="#5b9bd5"/><circle cx="60" cy="60" r="7" fill="#34d399"/>
+            <circle cx="96" cy="34" r="6" fill="#5b9bd5"/><circle cx="40" cy="92" r="6" fill="#34d399"/>
+            <circle cx="90" cy="90" r="6" fill="#5b9bd5"/>
+            <path d="M24 30 60 60M60 60 96 34M60 60 40 92M60 60 90 90" stroke="rgba(120,150,190,.5)" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ SERVICES ============ -->
+<section id="services">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Что я делаю</span>
+      <h2 class="title">Автоматизация <span class="g">под ключ</span></h2>
+      <p class="lead">Пять направлений, которые закрывают путь от идеи до работающей системы в проде.</p>
+    </div>
+    <div class="grid-services">
+      <div class="svc reveal">
+        <div class="svc-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg></div>
+        <h3>AI-агенты и чат-боты</h3>
+        <p>Telegram-боты с RAG-памятью, голосовым вводом и маршрутизацией к менеджеру. Отвечают как человек, работают круглосуточно.</p>
+      </div>
+      <div class="svc reveal">
+        <div class="svc-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></div>
+        <h3>Процессы на n8n</h3>
+        <p>Связываю сервисы в единый workflow: маркетплейсы, CRM, почта, таблицы, API. Данные текут сами — без ручного копипаста.</p>
+      </div>
+      <div class="svc reveal">
+        <div class="svc-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+        <h3>CRM и админ-панели</h3>
+        <p>Свои панели управления на React + FastAPI/PostgREST. Записи, клиенты, аналитика, KPI — всё под контролем клиента, без внешних SaaS.</p>
+      </div>
+      <div class="svc reveal">
+        <div class="svc-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg></div>
+        <h3>Интеграции и API</h3>
+        <p>Google Drive и Calendar, Telegram, платёжки, векторные БД, LLM-провайдеры. Собираю нестандартные связки под задачу.</p>
+      </div>
+      <div class="svc reveal">
+        <div class="svc-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2.5"/><path d="M12 18h.01"/></svg></div>
+        <h3>Мобильные приложения</h3>
+        <p>Нативные приложения на React Native / Expo и Telegram Mini Apps на общем бэкенде. От прототипа до сборки APK.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROJECTS ============ -->
+<section id="projects">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Портфолио</span>
+      <h2 class="title">14 проектов <span class="g">в реальном проде</span></h2>
+      <p class="lead">От AI-ботов и автоматизаций до полноценных CRM и мобильных приложений. Каждый проект — работающая система, а не концепт.</p>
+    </div>
+
+    <div class="filters reveal" id="filters">
+      <button class="filter active" data-f="all">Все</button>
+      <button class="filter" data-f="ai">AI и боты</button>
+      <button class="filter" data-f="crm">CRM и панели</button>
+      <button class="filter" data-f="mobile">Мобильные</button>
+      <button class="filter" data-f="oss">Open Source</button>
+    </div>
+
+    <div class="grid-projects" id="projectsGrid">
+
+      <!-- FLAGSHIP: Sun Self -->
+      <article class="pcard flag reveal" data-cat="ai crm">
+        <div class="pcard-media em">
+          <div class="shine"></div>
+          <div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg></div>
+          <div class="mock">
+            <div class="mock-bar"><i></i><i></i><i></i></div>
+            <div class="mock-body">
+              <div class="mock-tiles"><span></span><span></span><span></span><span></span></div>
+              <div class="row a"></div><div class="row b"></div><div class="row c"></div>
+              <div class="mock-tiles"><span></span><span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="pcard-body">
+          <span class="pcard-type">AI-бот + CRM</span>
+          <h3>Sun Self — beauty-студия</h3>
+          <p>Telegram-бот записи на n8n с RAG на Supabase Vector Store и памятью в PostgreSQL. Голосовой ввод через Whisper, проверка свободных слотов из базы клиентов и бронирование прямо в чате. Плюс кастомная CRM на React + PostgREST: записи, мастера, услуги, расходы и дашборд с KPI — премиум тёмная тема с золотым акцентом, всё под контролем клиента.</p>
+          <div class="tags">
+            <span class="tag">n8n</span><span class="tag">Supabase Vector</span><span class="tag">Whisper</span><span class="tag">PostgreSQL</span><span class="tag">React</span><span class="tag">PostgREST</span><span class="tag">OpenAI</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- FLAGSHIP: AI Realtor -->
+      <article class="pcard flag reveal" data-cat="crm mobile">
+        <div class="pcard-media">
+          <div class="shine"></div>
+          <div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg></div>
+          <div class="mock">
+            <div class="mock-bar"><i></i><i></i><i></i></div>
+            <div class="mock-body">
+              <div class="row b"></div><div class="row a"></div>
+              <div class="mock-tiles"><span></span><span></span><span></span></div>
+              <div class="row c"></div><div class="mock-tiles"><span></span><span></span><span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="pcard-body">
+          <span class="pcard-type blue">CRM + Mini App</span>
+          <h3>AI Realtor — CRM для агентства недвижимости</h3>
+          <p>CRM для риелторского агентства на рынке новостроек Пхукета. Админ-панель на React + FastAPI + PostgreSQL: каталог ЖК → корпуса → квартиры → медиа и прайс-листы, роли и права, аналитика продаж, учёт наличия в реальном времени и интеграция с Google Drive. Для агентов — Telegram Mini App с поиском по фильтрам и формированием КП в один клик.</p>
+          <div class="tags">
+            <span class="tag">React</span><span class="tag">FastAPI</span><span class="tag">PostgreSQL</span><span class="tag">Telegram Mini App</span><span class="tag">Google Drive API</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- FLAGSHIP: MoiDom -->
+      <article class="pcard flag reveal" data-cat="mobile crm">
+        <div class="pcard-media">
+          <div class="shine"></div>
+          <div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/><path d="M9 22V12h6v10"/></svg></div>
+          <div class="mock">
+            <div class="mock-bar"><i></i><i></i><i></i></div>
+            <div class="mock-body">
+              <div class="row a"></div>
+              <div class="mock-tiles"><span></span><span></span></div>
+              <div class="mock-tiles"><span></span><span></span></div>
+              <div class="row b"></div>
+            </div>
+          </div>
+        </div>
+        <div class="pcard-body">
+          <span class="pcard-type">Mobile App + SaaS</span>
+          <h3>МойДом — приложение для управляющих компаний</h3>
+          <p>Полноценное нативное мобильное приложение для жильцов (не бот и не мини-апп): заявки в УК с фото, передача показаний счётчиков, объявления, чат на WebSocket и push-уведомления. React Native / Expo, сборка APK через EAS. Бэкенд на Bun + Hono + PostgreSQL/Prisma + Redis, авторизация JWT + Firebase Phone Auth, мультитенантная архитектура. Плюс админ-панель для УК на поддомене. Домофон и камеры — в роадмапе (в UI помечены «Скоро»).</p>
+          <div class="tags">
+            <span class="tag">React Native</span><span class="tag">Expo</span><span class="tag">Bun</span><span class="tag">Hono</span><span class="tag">PostgreSQL</span><span class="tag">Prisma</span><span class="tag">Redis</span><span class="tag">WebSocket</span><span class="tag">Firebase Auth</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- FLAGSHIP: SmartHome Auditor -->
+      <article class="pcard flag reveal" data-cat="oss">
+        <div class="pcard-media">
+          <div class="shine"></div>
+          <div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <div class="mock">
+            <div class="mock-bar"><i></i><i></i><i></i></div>
+            <div class="mock-body">
+              <div class="row b"></div><div class="row a"></div><div class="row c"></div>
+              <div class="mock-tiles"><span></span><span></span><span></span></div>
+              <div class="row a"></div>
+            </div>
+          </div>
+        </div>
+        <div class="pcard-body">
+          <span class="pcard-type">Open Source · Security</span>
+          <h3>SmartHome Security Auditor</h3>
+          <p>Собственный open-source CLI-инструмент (MIT) для аудита безопасности умного дома. Сам находит IoT-устройства в сети и прогоняет 40+ проверок: дефолтные пароли, HTTP/HTTPS, SSL, telnet/SSH, UPnP, CORS, известные CVE. Поддержка Home Assistant, Tuya, Xiaomi, Zigbee, MQTT. Отчёты в HTML/JSON/консоль, Telegram-алерты на critical-находки. Python 3.11 + async, модульная архитектура, Rich, pytest. Доказывает, что за n8n стоит системный Python.</p>
+          <div class="tags">
+            <span class="tag">Python</span><span class="tag">async · aiohttp</span><span class="tag">IoT Security</span><span class="tag">SQLite</span><span class="tag">MIT License</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- EXISTING 10 -->
+      <article class="pcard reveal" data-cat="ai">
+        <div class="pcard-media"><div class="shine"></div><div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M8 3H3v5M3 16v5h5M21 16v5h-5"/><path d="M9 9h6v6H9z"/></svg></div></div>
+        <div class="pcard-body">
+          <span class="pcard-type blue">AI · Интеграция</span>
+          <h3>Перенос товаров между маркетплейсами</h3>
+          <p>Автоматический перенос карточек с AI-анализом описаний, категорий и характеристик между площадками.</p>
+          <div class="tags"><span class="tag">n8n</span><span class="tag">Claude API</span><span class="tag">REST API</span></div>
+        </div>
+      </article>
+
+      <article class="pcard reveal" data-cat="ai">
+        <div class="pcard-media"><div class="shine"></div><div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></div></div>
+        <div class="pcard-body">
+          <span class="pcard-type">AI-бот</span>
+          <h3>AI-автоответчик для Avito</h3>
+          <p>Бот отвечает на сообщения покупателей мгновенно, квалифицирует лид и передаёт горячих менеджеру.</p>
+          <div class="tags"><span class="tag">n8n</span><span class="tag">Claude API</span><span class="tag">Avito API</span></div>
+        </div>
+      </article>
+
+      <article class="pcard reveal" data-cat="ai">
+        <div class="pcard-media"><div class="shine"></div><div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg></div></div>
+        <div class="pcard-body">
+          <span class="pcard-type">AI · Аналитика</span>
+          <h3>Расшифровка звонков для РОП</h3>
+          <p>Транскрибация разговоров через Whisper и AI-оценка качества — руководитель видит суть без часов прослушивания.</p>
+          <div class="tags"><span class="tag">Whisper</span><span class="tag">Claude API</span><span class="tag">n8n</span></div>
+        </div>
+      </article>
+
+      <article class="pcard reveal" data-cat="ai crm">
+        <div class="pcard-media em"><div class="shine"></div><div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/></svg></div></div>
+        <div class="pcard-body">
+          <span class="pcard-type">AI · Интеграция</span>
+          <h3>HR-автоматизация HeadHunter → ELMA365</h3>
+          <p>Отклики с hh.ru автоматически проходят AI-скоринг и попадают в ELMA365 с готовой карточкой кандидата.</p>
+          <div class="tags"><span class="tag">n8n</span><span class="tag">HH API</span><span class="tag">ELMA365</span></div>
+        </div>
+      </article>
+
+      <article class="pcard reveal" data-cat="ai">
+        <div class="pcard-media"><div class="shine"></div><div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></div></div>
+        <div class="pcard-body">
+          <span class="pcard-type blue">AI · Генерация</span>
+          <h3>Визуализация интерьеров через fal.ai</h3>
+          <p>Генерация фотореалистичных рендеров интерьеров по фото пустой комнаты и текстовому описанию.</p>
+          <div class="tags"><span class="tag">fal.ai</span><span class="tag">n8n</span><span class="tag">Telegram</span></div>
+        </div>
+      </article>
+
+      <article class="pcard reveal" data-cat="ai">
+        <div class="pcard-media"><div class="shine"></div><div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5" fill="currentColor"/></svg></div></div>
+        <div class="pcard-body">
+          <span class="pcard-type">Автоматизация</span>
+          <h3>RSS-агрегатор новостей недвижимости</h3>
+          <p>Собирает новости из десятков источников, дедуплицирует, суммаризирует через AI и публикует дайджест.</p>
+          <div class="tags"><span class="tag">n8n</span><span class="tag">RSS</span><span class="tag">Claude API</span></div>
+        </div>
+      </article>
+
+      <article class="pcard reveal" data-cat="ai">
+        <div class="pcard-media"><div class="shine"></div><div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></div></div>
+        <div class="pcard-body">
+          <span class="pcard-type blue">AI · Генерация</span>
+          <h3>Генератор PDF-коммерческих предложений</h3>
+          <p>По брифу клиента AI собирает персонализированное КП и отдаёт готовый брендированный PDF.</p>
+          <div class="tags"><span class="tag">n8n</span><span class="tag">Claude API</span><span class="tag">PDF</span></div>
+        </div>
+      </article>
+
+      <article class="pcard reveal" data-cat="ai">
+        <div class="pcard-media"><div class="shine"></div><div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M12 2a10 10 0 0 0-7 17M12 22a10 10 0 0 0 7-17"/></svg></div></div>
+        <div class="pcard-body">
+          <span class="pcard-type">AI · Генерация</span>
+          <h3>Сервис замены лиц на фото</h3>
+          <p>Пайплайн face-swap с загрузкой через Telegram, обработкой и выдачей результата в чат.</p>
+          <div class="tags"><span class="tag">n8n</span><span class="tag">AI Vision</span><span class="tag">Telegram</span></div>
+        </div>
+      </article>
+
+      <article class="pcard reveal" data-cat="ai">
+        <div class="pcard-media em"><div class="shine"></div><div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg></div></div>
+        <div class="pcard-body">
+          <span class="pcard-type">AI · RAG</span>
+          <h3>AI-консультант с RAG-памятью</h3>
+          <p>Бот отвечает на вопросы по базе знаний компании, помня контекст диалога через векторный поиск.</p>
+          <div class="tags"><span class="tag">n8n</span><span class="tag">Vector Store</span><span class="tag">Claude API</span></div>
+        </div>
+      </article>
+
+      <article class="pcard reveal" data-cat="ai">
+        <div class="pcard-media"><div class="shine"></div><div class="mono"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M8 14h.01M12 14h.01M16 14h.01"/></svg></div></div>
+        <div class="pcard-body">
+          <span class="pcard-type blue">AI · Ассистент</span>
+          <h3>Личный AI-секретарь</h3>
+          <p>Управляет встречами в Google Calendar, напоминает о задачах и отвечает на рутину голосом и текстом.</p>
+          <div class="tags"><span class="tag">n8n</span><span class="tag">Google Calendar</span><span class="tag">Whisper</span></div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW ============ -->
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Как я работаю</span>
+      <h2 class="title">От брифа <span class="g">до прода</span></h2>
+      <p class="lead">Прозрачный процесс без сюрпризов. Вы видите результат на каждом этапе.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><span class="step-n">01</span><h3>Бриф и анализ</h3><p>Разбираем задачу, узкие места и цель. Фиксируем, что должно измениться в цифрах.</p></div>
+      <div class="step reveal"><span class="step-n">02</span><h3>Архитектура</h3><p>Проектирую схему workflow и данных, согласуем логику и точки интеграции.</p></div>
+      <div class="step reveal"><span class="step-n">03</span><h3>Разработка</h3><p>Собираю систему, подключаю API и AI, тестирую на реальных сценариях.</p></div>
+      <div class="step reveal"><span class="step-n">04</span><h3>Запуск и поддержка</h3><p>Разворачиваю в прод, обучаю команду и остаюсь на связи для доработок.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REVIEWS ============ -->
+<section id="reviews" class="reviews">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Отзывы</span>
+      <h2 class="title">Что говорят <span class="g">клиенты</span></h2>
+    </div>
+  </div>
+  <div class="reviews-fade">
+    <div class="marquee" id="marquee">
+      <!-- 8 unique cards; duplicated in JS for seamless loop -->
+    </div>
+  </div>
+</section>
+
+<!-- ============ TECH ============ -->
+<section id="tech">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Технологии</span>
+      <h2 class="title">Стек, на котором <span class="g">всё держится</span></h2>
+      <p class="lead">От low-code автоматизаций до нативных приложений и системного Python.</p>
+    </div>
+    <div class="tech-grid reveal" id="techGrid"></div>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section id="contact">
+  <div class="wrap">
+    <div class="contact-card reveal">
+      <span class="eyebrow" style="justify-content:center">Свяжитесь со мной</span>
+      <h2>Есть задача<br>на <span class="g">автоматизацию?</span></h2>
+      <p>Опишите, что хотите автоматизировать — предложу решение и сроки. Первая консультация бесплатна.</p>
+      <div class="contact-cta">
+        <a href="https://t.me/Automatizacion007" target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          Написать в Telegram
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 16 L10 8 L14 13 L20 6" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4" cy="16" r="1.8" fill="#5b9bd5"/><circle cx="20" cy="6" r="1.8" fill="#34d399"/></svg></span>
+        <div>
+          <div style="font-weight:600">Пётр · AI &amp; n8n Automation Developer</div>
+          <div class="muted">Астрахань, Россия · petr-ai.ru</div>
+        </div>
+      </div>
+      <div class="foot-links">
+        <a href="#projects">Проекты</a>
+        <a href="#tech">Стек</a>
+        <a href="https://t.me/Automatizacion007" target="_blank" rel="noopener">@Automatizacion007</a>
+      </div>
+    </div>
+    <div class="muted" style="margin-top:26px;font-size:12.5px">© <span id="year"></span> petr-ai.ru — Автоматизация бизнеса с помощью AI и n8n.</div>
+  </div>
+</footer>
+
+<script>
+/* ============ YEAR ============ */
+document.getElementById('year').textContent = new Date().getFullYear();
+
+/* ============ HEADER SCROLL ============ */
+const header = document.getElementById('header');
+addEventListener('scroll', () => header.classList.toggle('scrolled', scrollY > 20), {passive:true});
+
+/* ============ MOBILE MENU ============ */
+const burger = document.getElementById('burger');
+const mm = document.getElementById('mobileMenu');
+burger.addEventListener('click', () => mm.classList.toggle('open'));
+mm.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mm.classList.remove('open')));
+
+/* ============ REVEAL (IntersectionObserver) ============ */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+}, {threshold:.12, rootMargin:'0px 0px -8% 0px'});
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ============ PROJECT FILTERS ============ */
+const filters = document.getElementById('filters');
+const cards = [...document.querySelectorAll('#projectsGrid .pcard')];
+filters.addEventListener('click', e => {
+  const btn = e.target.closest('.filter'); if(!btn) return;
+  filters.querySelectorAll('.filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const f = btn.dataset.f;
+  cards.forEach(c => {
+    const show = f === 'all' || (c.dataset.cat || '').split(' ').includes(f);
+    c.style.display = show ? '' : 'none';
+  });
+});
+
+/* ============ CARD 3D TILT ============ */
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const coarse = matchMedia('(pointer: coarse)').matches;
+if(!reduce && !coarse){
+  cards.forEach(card => {
+    card.addEventListener('mousemove', ev => {
+      const r = card.getBoundingClientRect();
+      const px = (ev.clientX - r.left) / r.width - .5;
+      const py = (ev.clientY - r.top) / r.height - .5;
+      card.style.transform = `perspective(900px) rotateY(${px*5}deg) rotateX(${-py*5}deg) translateY(-4px)`;
+    });
+    card.addEventListener('mouseleave', () => card.style.transform = '');
+  });
+}
+
+/* ============ REVIEWS DATA + DUPLICATE FOR LOOP ============ */
+const reviews = [
+  {t:"Пётр автоматизировал обработку заявок с Avito — бот отвечает мгновенно и сам квалифицирует лидов. Менеджеры разгружены, окупилось за первый месяц.", n:"Дмитрий", r:"руководитель отдела продаж"},
+  {t:"Сделал расшифровку звонков для РОП. Теперь вижу качество разговоров без часов прослушивания — сразу по сути. Огонь.", n:"Анна", r:"РОП, оптовая компания"},
+  {t:"Заказывали Telegram-бота для записи в студию. Клиенты бронируют голосом прямо в чате, а вся аналитика — в удобной CRM. Уровень!", n:"Марина", r:"владелица beauty-студии"},
+  {t:"Перенёс нам тысячи товаров между маркетплейсами с AI-анализом описаний. То, на что уходили недели, теперь пара часов.", n:"Сергей", r:"e-commerce"},
+  {t:"CRM для агентства недвижимости на Пхукете сделал под ключ. Мини-апп для агентов и полноценная админка — работает как часы.", n:"Игорь", r:"директор агентства"},
+  {t:"Внедрили AI-консультанта с RAG по нашей базе знаний. Отвечает точно, помнит контекст. Поддержка стала быстрее в разы.", n:"Ольга", r:"руководитель поддержки"},
+  {t:"Личный AI-секретарь ведёт мой календарь и напоминает о задачах. Освободил кучу времени на реальную работу.", n:"Алексей", r:"предприниматель"},
+  {t:"Профессионал, который доводит до результата, а не до демо. Всё в проде, всё работает. Рекомендую без оговорок.", n:"Екатерина", r:"операционный директор"}
+];
+const starSvg = '<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.8 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8Z"/></svg>';
+function revCard(o){
+  return `<div class="rev"><div class="rev-stars">${starSvg.repeat(5)}</div>
+    <p>«${o.t}»</p>
+    <div class="rev-who"><div class="rev-av">${o.n[0]}</div><div><b>${o.n}</b><span>${o.r}</span></div></div></div>`;
+}
+document.getElementById('marquee').innerHTML = (reviews.map(revCard).join('')).repeat(2);
+
+/* ============ TECH STACK ICONS ============ */
+const tech = [
+  ['n8n','<path d="M6 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0Zm12-6a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm0 11a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5ZM9 12h6.5M15.5 12l2-4M15.5 12l2 4"/>'],
+  ['Python','<path d="M12 2c-2.5 0-4 1-4 3v3h5M8 8H5c-2 0-3 1.5-3 4s1 4 3 4h3M12 22c2.5 0 4-1 4-3v-3h-5M16 16h3c2 0 3-1.5 3-4s-1-4-3-4h-3"/>'],
+  ['Claude API','<path d="M4 18 9 6l3 8 3-8 5 12M7 14h4M13 14h4"/>'],
+  ['Telegram','<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>'],
+  ['PostgreSQL','<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'],
+  ['Docker','<rect x="3" y="10" width="4" height="4"/><rect x="8" y="10" width="4" height="4"/><rect x="8" y="5" width="4" height="4"/><rect x="13" y="10" width="4" height="4"/><path d="M20 12s1.5 0 2-1c-.5-1-2-1-2-1M2 15c0 3 3 5 8 5 6 0 10-3 11-8"/>'],
+  ['React','<circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(120 12 12)"/>'],
+  ['React Native','<circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(45 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-45 12 12)"/>'],
+  ['Expo','<path d="M12 3 3 20h4l5-9 5 9h4Z"/>'],
+  ['FastAPI','<circle cx="12" cy="12" r="9"/><path d="M13 7l-4 6h4l-1 4 4-6h-4Z" fill="currentColor" stroke="none"/>'],
+  ['Bun','<path d="M12 4c5 0 9 3.4 9 7.6S17 20 12 20s-9-3.6-9-8.4S7 4 12 4Z"/><circle cx="9" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"/><path d="M10.5 14.5a2 2 0 0 0 3 0"/>'],
+  ['Hono','<path d="M12 2C9 7 5 9 5 13a7 7 0 0 0 14 0c0-4-4-6-7-11Z"/>'],
+  ['Supabase','<path d="M13 2 5 13h7l-1 9 8-11h-7Z"/>'],
+  ['Prisma','<path d="M5 16 12 3l6 15-6 3Z"/><path d="M5 16 12 6"/>'],
+  ['Redis','<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>'],
+  ['WebSocket','<path d="M3 12h6l2-4 3 8 2-4h5"/><circle cx="3" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="21" cy="12" r="1.4" fill="currentColor" stroke="none"/>']
+];
+document.getElementById('techGrid').innerHTML = tech.map(([n,p]) =>
+  `<div class="tech"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg><span>${n}</span></div>`
+).join('');
+
+/* ============ THREE.JS HERO SCENE (lazy, progressive) ============ */
+(function initHero(){
+  const visual = document.getElementById('heroVisual');
+  if(reduce || coarse){ visual.classList.add('static'); return; }
+
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  s.onload = buildScene;
+  s.onerror = () => visual.classList.add('static');
+  document.head.appendChild(s);
+
+  function buildScene(){
+    const THREE = window.THREE;
+    const canvas = document.getElementById('hero-canvas');
+    const w = () => visual.clientWidth, h = () => visual.clientHeight;
+    const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(w(), h());
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, w()/h(), .1, 100);
+    camera.position.z = 14;
+
+    const group = new THREE.Group();
+    scene.add(group);
+
+    // nodes
+    const N = 26;
+    const nodes = [];
+    const nodeGeo = new THREE.SphereGeometry(.16, 16, 16);
+    const blue = new THREE.MeshBasicMaterial({color:0x5b9bd5});
+    const em = new THREE.MeshBasicMaterial({color:0x34d399});
+    for(let i=0;i<N;i++){
+      const m = new THREE.Mesh(nodeGeo, Math.random()>.5?blue:em);
+      const rad = 5 + Math.random()*3.5;
+      const th = Math.random()*Math.PI*2, ph = Math.acos(2*Math.random()-1);
+      m.position.set(rad*Math.sin(ph)*Math.cos(th), rad*Math.sin(ph)*Math.sin(th)*.7, rad*Math.cos(ph));
+      m.userData.v = new THREE.Vector3((Math.random()-.5)*.006,(Math.random()-.5)*.006,(Math.random()-.5)*.006);
+      group.add(m); nodes.push(m);
+    }
+    // connectors
+    const linePos = [];
+    for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){
+      if(nodes[i].position.distanceTo(nodes[j].position) < 4.2){
+        linePos.push(nodes[i].position, nodes[j].position);
+      }
+    }
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(linePos);
+    const lineMat = new THREE.LineBasicMaterial({color:0x3a6ea5, transparent:true, opacity:.28});
+    const lines = new THREE.LineSegments(lineGeo, lineMat);
+    group.add(lines);
+
+    // subtle glow points
+    const glowGeo = new THREE.BufferGeometry();
+    const gp = [];
+    for(let i=0;i<160;i++) gp.push((Math.random()-.5)*22,(Math.random()-.5)*16,(Math.random()-.5)*18);
+    glowGeo.setAttribute('position', new THREE.Float32BufferAttribute(gp,3));
+    const glow = new THREE.Points(glowGeo, new THREE.PointsMaterial({color:0x5fe0b0, size:.05, transparent:true, opacity:.5}));
+    scene.add(glow);
+
+    let mx=0,my=0, tx=0,ty=0;
+    visual.addEventListener('mousemove', e => {
+      const r = visual.getBoundingClientRect();
+      tx = ((e.clientX-r.left)/r.width - .5)*.5;
+      ty = ((e.clientY-r.top)/r.height - .5)*.5;
+    });
+    visual.addEventListener('mouseleave', () => { tx=0; ty=0; });
+
+    let running = true;
+    const vis = new IntersectionObserver(es => running = es[0].isIntersecting, {threshold:0});
+    vis.observe(visual);
+
+    addEventListener('resize', () => {
+      camera.aspect = w()/h(); camera.updateProjectionMatrix(); renderer.setSize(w(),h());
+    });
+
+    function animate(){
+      requestAnimationFrame(animate);
+      if(!running) return;
+      mx += (tx-mx)*.05; my += (ty-my)*.05;
+      group.rotation.y += .0018;
+      group.rotation.x = my; group.rotation.z = mx*.3;
+      // drift nodes slightly
+      nodes.forEach(n => {
+        n.position.add(n.userData.v);
+        if(n.position.length() > 9 || n.position.length() < 4) n.userData.v.multiplyScalar(-1);
+      });
+      const arr = [];
+      for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){
+        if(nodes[i].position.distanceTo(nodes[j].position) < 4.2) arr.push(nodes[i].position, nodes[j].position);
+      }
+      lines.geometry.setFromPoints(arr);
+      glow.rotation.y -= .0006;
+      renderer.render(scene, camera);
+    }
+    animate();
+  }
+})();
+
+/* ============ BACKGROUND PARTICLE MESH (canvas 2D, lightweight) ============ */
+(function bg(){
+  if(reduce){ return; }
+  const c = document.getElementById('bg-canvas');
+  const ctx = c.getContext('2d');
+  let W,H,pts;
+  function resize(){
+    W = c.width = innerWidth; H = c.height = innerHeight;
+    const count = coarse ? 26 : Math.min(60, Math.floor(W*H/26000));
+    pts = Array.from({length:count}, () => ({
+      x:Math.random()*W, y:Math.random()*H,
+      vx:(Math.random()-.5)*.25, vy:(Math.random()-.5)*.25
+    }));
+  }
+  resize(); addEventListener('resize', resize);
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of pts){
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1;
+    }
+    for(let i=0;i<pts.length;i++){
+      for(let j=i+1;j<pts.length;j++){
+        const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.hypot(dx,dy);
+        if(d<130){
+          ctx.strokeStyle=`rgba(91,155,213,${(1-d/130)*.12})`;
+          ctx.lineWidth=.6;
+          ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke();
+        }
+      }
+      ctx.fillStyle='rgba(52,211,153,.35)';
+      ctx.beginPath(); ctx.arc(pts[i].x,pts[i].y,1.1,0,7); ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
