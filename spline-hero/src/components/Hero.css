@@ -1,0 +1,137 @@
+.hero {
+  position: relative;
+  width: 100%;
+  /* Полноэкранная высота: 100dvh корректно учитывает адресную строку на
+     мобильных браузерах, 100vh — фолбэк для старых движков. */
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: #000;
+}
+
+/* --- 3D-сцена --- */
+.hero__scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero__iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* Простой лоадер, пока грузится сцена */
+.hero__loader {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 40%, #1a1a2e 0%, #000 70%);
+}
+
+.hero__loader::after {
+  content: '';
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: hero-spin 0.9s linear infinite;
+}
+
+@keyframes hero-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Контент поверх сцены --- */
+.hero__overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: clamp(1.5rem, 5vw, 4rem);
+  /* Учитываем «безопасные зоны» iPhone (челка / нижняя полоса) */
+  padding-bottom: calc(clamp(1.5rem, 5vw, 4rem) + env(safe-area-inset-bottom));
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.65) 0%,
+    rgba(0, 0, 0, 0.25) 45%,
+    transparent 100%
+  );
+  /* Не перехватываем жесты — сцена остаётся интерактивной,
+     кнопка получает клики отдельно. */
+  pointer-events: none;
+}
+
+.hero__title {
+  margin: 0;
+  font-size: clamp(2rem, 8vw, 5rem);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.6);
+}
+
+.hero__subtitle {
+  margin: 0;
+  max-width: 34ch;
+  font-size: clamp(0.95rem, 3.5vw, 1.25rem);
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.hero__cta {
+  pointer-events: auto;
+  margin-top: 0.5rem;
+  display: inline-block;
+  padding: 0.85rem 1.75rem;
+  border-radius: 999px;
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+  font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+  text-decoration: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.hero__cta:hover,
+.hero__cta:focus-visible {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* --- Адаптив для мобильных --- */
+@media (max-width: 640px) {
+  .hero__overlay {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero__subtitle {
+    max-width: 90%;
+  }
+}
+
+/* Уважаем настройку «уменьшить движение» */
+@media (prefers-reduced-motion: reduce) {
+  .hero__loader::after,
+  .hero__cta {
+    animation: none;
+    transition: none;
+  }
+}
